@@ -8,25 +8,32 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using LineGPTAzureFunctions.Helper;
+using Microsoft.Extensions.Logging;
 
 namespace LineGPTAzureFunctions.Line
 {
     public class LineProcess
     {
-        private readonly string _messagingApiUrl = "https://api.line.me/v2/bot/message/reply";
-        private readonly string _linechannelAccessToken = @"jbwg5RbX/5A47Gg/xGgvMVE0WMFNjlpYzDrc2fyAGO07qikKownm3Wu4u7mrTbu15VgoqZgq/RfGo2RM0WlgHGpw/gSSa/BWNyGYx8tJaNioffVXTiGUBnjbsSNzijJEkAy9GA3w9XQKZCiCb7SLxwdB04t89/1O/w1cDnyilFU=";
-        private readonly string _linechannelSecret = "1045973fc88d32d25dd2eb22586ddbed";
-        private HttpClient _httpClient = new HttpClient();
+       static KeyValueSetting keyValueSetting = new KeyValueSetting();
+        private string _lineMessagingApiUrl = keyValueSetting.lineMessagingApiUrl;
+        private string _linechannelAccessToken = keyValueSetting.linechannelAccessToken;
+        private string _linechannelSecret = keyValueSetting.linechannelSecret;
+        private string _lineRequestUrl = keyValueSetting.lineRequestUrl;
+        private string _lineNotifyUrl = keyValueSetting.lineNotifyUrl;
 
+        private HttpClient _httpClient = new HttpClient();
+        ILogger log;
+      
 
         public async Task ReplyAsync(string replyToken, string message)
         {
-            HttpClient _httpClient = new HttpClient();
 
+            HttpClient _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _linechannelAccessToken);
 
-            var response = await _httpClient.PostAsJsonAsync<LineTextReplyJson>(_messagingApiUrl, new LineTextReplyJson()
+            var response = await _httpClient.PostAsJsonAsync<LineTextReplyJson>(_lineMessagingApiUrl, new LineTextReplyJson()
             {
                 replyToken = replyToken,
                 messages = new List<Message>()
@@ -56,11 +63,11 @@ namespace LineGPTAzureFunctions.Line
         public async Task<UserProfile> GetUserProfile(string userId)
         {
             HttpClient httpClient = new HttpClient();
-            //GET https://api.line.me/v2/bot/profile/{userId}
+          
             var httpRequestMessage = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://api.line.me/v2/bot/profile/{userId}"),
+                RequestUri = new Uri($"{_lineRequestUrl}{userId}"),
                 Headers = {
                     { "Authorization", $"Bearer {_linechannelAccessToken}" },
                 }
@@ -74,6 +81,20 @@ namespace LineGPTAzureFunctions.Line
             return profile;
         }
 
-
+        public async Task SendNotify(string sendMsg)
+        {
+            KeyValueSetting keyValueSetting = new KeyValueSetting();
+            string token = keyValueSetting.lineNotifacationToken;
+            using (HttpClient client = new HttpClient())
+            {
+                FormUrlEncodedContent content = new FormUrlEncodedContent(new Dictionary<string, string> { { "message", "\r\n" + sendMsg } });
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                HttpResponseMessage httpResponseMessage = await client.PostAsync($"{_lineNotifyUrl}", content);
+                string result = await httpResponseMessage.Content.ReadAsStringAsync();
+                // log.LogInformation($"SendNotifyResult : {result}");
+                // _ = httpResponseMessage;
+                //return result;
+            }
+        }
     }
 }

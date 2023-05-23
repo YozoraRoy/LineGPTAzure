@@ -9,7 +9,7 @@ namespace ConsoleTest.MessageClass
 {
     public class RequestData
     {
-        public RequestData(string model, List<ChatGPTMsg> messages, double temperature, int max_tokens, int top_p, int frequency_penalty, int presence_penalty, string stop)
+        public RequestData(string model, List<ChatGPTMsg> messages, double temperature, int max_tokens, double top_p, int frequency_penalty, int presence_penalty, string stop)
         {
             this.model = model;
             this.messages = messages;
@@ -25,7 +25,7 @@ namespace ConsoleTest.MessageClass
         public List<ChatGPTMsg> messages { get; set; }
         public double temperature { get; set; }
         public int max_tokens { get; set; }
-        public int top_p { get; set; }
+        public double top_p { get; set; }
         public int frequency_penalty { get; set; }
         public int presence_penalty { get; set; }
         public string? stop { get; set; }

@@ -39,13 +39,10 @@ namespace LineGPTAzureFunctions.ChatGPT
 
         public async Task<ChatResult> StartEndpointMode(ILogger log, string apiKey, ChatMessage[] messages)
         {
-            apiKey = GetApikey();
-
-            _ = string.IsNullOrEmpty(apiKey) ? null : _apiKey = apiKey;
+            _ = string.IsNullOrEmpty(apiKey) ? _apiKey = GetApikey() : _apiKey = apiKey;
             ChatResult results = await ExecChatGpt(messages);
             return results;
         }
-
       
         public async Task<string> StartSimpleMode(ILogger log, LineMessageReceiveJson json, string apiKey)
         {
@@ -77,9 +74,10 @@ namespace LineGPTAzureFunctions.ChatGPT
             {
                 Model = Model.ChatGPTTurbo,
                 Temperature = 0.1,
-                MaxTokens = 100,
+                TopP = 0.1,
+                MaxTokens = 2900,                
                 Messages = messages
-            });
+            }); ;
 
             // log.LogInformation($"StartEndpointModeResult: {results}");
             var reply = results.Choices[0].Message;

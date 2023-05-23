@@ -1,5 +1,6 @@
 ﻿using ConsoleTest.MessageClass;
 using LineGPTAzureFunctions.ChatGPT;
+using LineGPTAzureFunctions.Line;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI_API.Chat;
@@ -18,7 +19,7 @@ namespace ConsoleTest
             var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
-            });
+            }); 
 
             // 建立 ILogger
             ILogger log = loggerFactory.CreateLogger<Program>();
@@ -26,9 +27,12 @@ namespace ConsoleTest
             Console.InputEncoding = Encoding.Unicode;
             Console.OutputEncoding = Encoding.Unicode;
 
+            // Test Line Notify
+            //LineProcess lineProcess = new LineProcess();
+            //var s = await lineProcess.SendNotify("test");
+
             // Replace this to your API Key
-            // string apiKey = "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";
-            string apiKey = "";
+            string apiKey = string.Empty;
 
             ChatGPTProcess chatGPTProcess = new ChatGPTProcess();
             List<ChatMessage> chatMessageList = new List<ChatMessage>();
@@ -50,28 +54,27 @@ namespace ConsoleTest
             while (true)
             {
 
-                ChatResult results = await chatGPTProcess.StartEndpointMode(log, apiKey, messages);
+                ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
 
                 // 印出回應
                 var reply = results.Choices[0].Message;                
                 Console.WriteLine($"{reply.Role}: {reply.Content.Trim()}");
 
-
                 // 設定下一個對話的 prompt
-                chatMessageList.Add(new ChatMessage(ChatMessageRole.User, reply.Content.Trim()));
+                chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, reply.Content.Trim()));
 
                 // 等待使用者輸入
                 Console.Write("> ");
 
                 string userInput = Console.ReadLine();
-                chatMessageList.Add(new ChatMessage(reply.Role, userInput.Trim()));
+                chatMessageList.Add(new ChatMessage(ChatMessageRole.User, userInput.Trim()));
                 messages = chatMessageList.ToArray();
 
             }
         }
 
 
-
+        // un used
         private static async Task HttpWayToChatGPT(string apiKey, string roleSetup)
         {
             // 設定要使用的model 
@@ -97,9 +100,9 @@ namespace ConsoleTest
                 var requestDatas = new RequestData(
                   model: model,
                   messages: messagesss,
-                  temperature: 0.7,
-                  max_tokens: 60,
-                  top_p: 1,
+                  temperature: 0.1,
+                  max_tokens: 3500,
+                  top_p: 0.1,
                   frequency_penalty: 0,
                   presence_penalty: 0,
                   stop: "\n"

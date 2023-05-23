@@ -48,7 +48,6 @@ namespace LineGPTAzureFunctions
 
             try
             {
-
                 if (lineProcess.IsSingature(xLineSignature, requestBody))
                 {
                     log.LogInformation($"lineProcess: OK");
@@ -65,8 +64,14 @@ namespace LineGPTAzureFunctions
                         ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
                         if (string.IsNullOrEmpty(results.ToString()))
                         {
-                            log.LogError($"From [OPenAI Error!!] process exception error...");
+                            string msg = $"From [OPenAI Error!!] process exception error...";
+                            log.LogError(msg);
+                            await lineProcess.SendNotify(msg);
                             await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From [Other!!]  some process exception error...");
+                            
+                            // Update message to cosmosdb.
+
+                            
                             return new BadRequestResult();
                         }
 
@@ -85,23 +90,19 @@ namespace LineGPTAzureFunctions
                             "Sorry we are not support sticker / image / video / audio  ");
                     }
                 }
-
             }
             catch (Exception ex)
             {
-                log.LogError($"{ex.Message}");
-                //await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From some process exception error...");
+                string msg = $"From [OutSide Exception!!] process exception error {ex.Message}";
+                log.LogError(msg);
+                await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "Currently under repair, please try again later");
+                await lineProcess.SendNotify(msg);
                 return new BadRequestResult();
             }
 
             log.LogError($"From Line process exception error...");
-            await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From some process exception error...");
-            return new BadRequestResult();
-
-            //log.LogError($"From [Other!!] process exception error...");
-            //await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From [Other!!]  some process exception error...");
-            //return new BadRequestResult();
-
+            await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "Currently under repair, please try again later");
+            return new BadRequestResult();   
         }
     }
 }
