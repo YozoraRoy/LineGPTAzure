@@ -57,7 +57,7 @@ namespace LineGPTAzureFunctions
 
                     if (jsonFromLine.events[0].type == "message")
                     {
-                        // Gheck conversion form azure cosmosdb replaccr and store
+                        // Gheck conversation form azure cosmosdb replaccr and store
                         CosmosProcess cosmosProcess = new CosmosProcess(log);
                         List<ChatMessage> chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(jsonFromLine.events[0].source.userId, lineUserData.displayName, jsonFromLine.events[0].message.text);
                         ChatMessage[] messages = chatMessageList.ToArray();

@@ -10,7 +10,6 @@ namespace CosmosGettingStartedTutorial
         // Line User Id
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
-        // public string? lineConversionId { get; set; }
         [JsonProperty(PropertyName = "partitionKey")]
         public string? PartitionKey { get; set; }
         public string? userName { get; set; }

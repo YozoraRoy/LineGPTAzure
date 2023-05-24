@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionTestProject", "Func
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestOPENAI", "ConsoleTest\ConsoleTestOPENAI.csproj", "{E6021F1E-88CC-4D2F-829A-6D4890A13529}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestCosmosDB", "ConsoleTestCosmosDB\ConsoleTestCosmosDB.csproj", "{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestCosmosDB", "ConsoleTestCosmosDB\ConsoleTestCosmosDB.csproj", "{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -34,6 +34,7 @@ namespace LineGPTAzureFunctions.DB
         public string systemSetup = string.Empty;
         ILogger _log;
         public static bool isInFiveMintue = true;
+        public static bool isNewConversation = false;
 
         public CosmosProcess()
         { }
@@ -67,14 +68,15 @@ namespace LineGPTAzureFunctions.DB
             var cosmosdbresult = await this.QueryChatMsgAsync(userId);
 
             if (cosmosdbresult.Count == 0)
-            {  // 1. new conversion 
-                _log.LogInformation($"New conversion: / {cosmosdbresult.Count} / isInFiveMintue:{isInFiveMintue}");
-                NewConversionMessage(userId, userDisplayName, usermeeage, chatMessageList);
+            {  // 1. new conversation 
+                isNewConversation = true;
+                _log.LogInformation($"New conversation: / {cosmosdbresult.Count} / isInFiveMintue:{isInFiveMintue}");
+                NewConversationMessage(userId, userDisplayName, usermeeage, chatMessageList);
                 MessageMapping messageMapping = new MessageMapping();
-                chatMessageList = messageMapping.NewConversionMessage(userId, userDisplayName, usermeeage, chatMessageList); ;
+                chatMessageList = messageMapping.NewConversationMessage(userId, userDisplayName, usermeeage, chatMessageList); ;
             }
             else
-            {// Continue conversion
+            {// Continue conversation
                 var result = cosmosdbresult.FirstOrDefault();
                 var finalDataTime = DateTime.Parse(result.finalDataTime);
 
@@ -85,17 +87,20 @@ namespace LineGPTAzureFunctions.DB
 
                 if (isOver5Minutes)
                 {
-                    _log.LogInformation($"Continue conversion - more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
+                    _log.LogInformation($"Continue conversation - more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
                     // .delete all record in CosmosDB created a new conversion
                     await DeleteItemAsync(userId);
                     isInFiveMintue = false;
+                    isNewConversation = true;
+                    MessageMapping messageMapping = new MessageMapping();
+                    chatMessageList = messageMapping.NewConversationMessage(userId, userDisplayName, usermeeage, chatMessageList); ;
                 }
                 else
                 {
                     // put message to the cosmosdb chatMessage.
                     result.chatMessage.Add(new ChatMessage(ChatMessageRole.User, usermeeage));
                     chatMessageList = result.chatMessage;
-                    _log.LogInformation($"Continue conversion - not more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
+                    _log.LogInformation($"Continue conversation - not more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
                      
                 }
             }
@@ -103,24 +108,24 @@ namespace LineGPTAzureFunctions.DB
             return chatMessageList;
         }
 
-        public async Task<string> FinalMessageDataProcess(List<ChatMessage> chatMessageList, string userId , string userDisplayName)
-        {
-
-            if (isInFiveMintue)
+        public async Task FinalMessageDataProcess(List<ChatMessage> chatMessageList, string userId , string userDisplayName)
+        {        
+            if (isNewConversation)
             {
-
+                _log.LogInformation($"Start-isNewConversation - StoreChatMsgToContainerAsync");
+                await StoreChatMsgToContainerAsync(chatMessageList, userId, userDisplayName, isInFiveMintue);
+                _log.LogInformation($"Ens-isNewConversation - StoreChatMsgToContainerAsync");                
+            }
+            else if (isInFiveMintue)
+            {
+                _log.LogInformation($"Start-isInFiveMintue-ReplaceMsgItemAsync");
                 await ReplaceMsgItemAsync(chatMessageList, userId, isInFiveMintue);
-            }
-            else
-            {
-                await StoreChatMsgToContainerAsync(chatMessageList, userId, userDisplayName , isInFiveMintue);
-            }
-
-            return " "; 
+                _log.LogInformation($"Ens-isInFiveMintue-ReplaceMsgItemAsync");
+            }            
         }
 
    
-        private void NewConversionMessage(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
+        private void NewConversationMessage(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
         {
             string mergemsg = string.Format("{0}{1}", systemSetup, userDisplayName);
             chatMessageList.Add(new ChatMessage(ChatMessageRole.System, mergemsg)); // Set CharGpt Role
@@ -143,13 +148,13 @@ namespace LineGPTAzureFunctions.DB
         /// </summary>
         private async Task<List<CosmosDBMessageRecorder>> QueryChatMsgAsync(string userId)
         {
-            string f5 = GetFivemMnDatatime();
+           
             // var sqlQueryText = $"SELECT * FROM c WHERE c.partitionKey = 'JapanPartition' and c.id = '{userId}' and c.finalDataTime >= '{f5}'";
             var sqlQueryText = $"SELECT * FROM c WHERE c.partitionKey = 'JapanPartition' and c.id = '{userId}'";
 
-            _log.LogInformation($"QueryChatMsgAsync: / {sqlQueryText}");
+            // _log.LogInformation($"QueryChatMsgAsync: / {sqlQueryText}");
 
-            // Console.WriteLine("Running query: {0}\n", sqlQueryText);
+             Console.WriteLine("Running query: {0}\n", sqlQueryText);
             
             QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
             FeedIterator<CosmosDBMessageRecorder> queryResultSetIterator = this.container.GetItemQueryIterator<CosmosDBMessageRecorder>(queryDefinition);
@@ -255,7 +260,7 @@ namespace LineGPTAzureFunctions.DB
         /// <summary>
         /// Entry point to call methods that operate on Azure Cosmos DB resources in this sample
         /// </summary>
-        public async Task GetStartedDemoAsync()
+        public async Task ExecTestDemoAsync()
         {
 
             GetLocalSetting(out systemSetup, out EndpointUri, out PrimaryKey, out databaseId, out containerId);
@@ -266,13 +271,17 @@ namespace LineGPTAzureFunctions.DB
             await this.CreateDatabaseAsync();
             await this.CreateContainerAsync();
             // await this.ScaleContainerAsync();
-            await this.AddUserMsgToContainerAsync();
+            // await this.AddUserMsgToContainerAsync();
             // await this.AddItemsToContainerAsync();
-            await this.QueryUserMsgAsync("00001");
+            // await this.QueryUserMsgAsync("U6fa80bda7dcb81a8a51d926ff36d832b");
 
-            await this.QueryUserMsgAsyncAndReplace("00001");
+            await this.QueryChatMsgAsync("U6fa80bda7dcb81a8a51d926ff36d832b");
 
-            await DeleteItemAsync("00001");
+            
+
+            // await this.QueryUserMsgAsyncAndReplace("00001");
+
+            // await DeleteItemAsync("00001");
             // await this.QueryItemsAsync();
             //await this.ReplaceFamilyItemAsync();
             //await this.DeleteFamilyItemAsync();
@@ -409,7 +418,7 @@ namespace LineGPTAzureFunctions.DB
             {
                 Console.WriteLine("Beginning operations...\n");
 
-                await GetStartedDemoAsync();
+                await ExecTestDemoAsync();
             }
             catch (CosmosException de)
             {

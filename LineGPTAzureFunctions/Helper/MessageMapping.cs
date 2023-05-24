@@ -12,7 +12,7 @@ namespace LineGPTAzureFunctions.Helper
         static KeyValueSetting keyValueSetting = new KeyValueSetting();
         string systemSetup = keyValueSetting.systemSetup; 
 
-        public List<ChatMessage> NewConversionMessage(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
+        public List<ChatMessage> NewConversationMessage(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
         {
             string mergemsg = string.Format("{0}{1}", systemSetup, userDisplayName);
             chatMessageList.Add(new ChatMessage(ChatMessageRole.System, mergemsg)); // Set CharGpt Role
