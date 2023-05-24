@@ -25,17 +25,18 @@ namespace LineGPTAzureFunctions.DB
                                                            // The name of the database and container we will create
 
         //// The Azure Cosmos DB endpoint for running this sample.
-        public static string EndpointUri = string.Empty;
+        public string EndpointUri = string.Empty;
 
         //// The primary key for the Azure Cosmos account.
-        public static string PrimaryKey = string.Empty;
+        public string PrimaryKey = string.Empty;
         public string databaseId = string.Empty;
         public string containerId = string.Empty;
         public string systemSetup = string.Empty;
         ILogger _log;
+        public bool isInFiveMintue = true;
 
         public CosmosProcess()
-        {            }
+        { }
 
         public CosmosProcess(ILogger log) {
             _log = log;
@@ -55,7 +56,7 @@ namespace LineGPTAzureFunctions.DB
 
             // Create a new instance of the Cosmos Client
             this.cosmosClient = new CosmosClient(EndpointUri, PrimaryKey, new CosmosClientOptions() { ApplicationName = "CosmosDBDotnetQuickstart" });
-            _log.LogInformation($"EndpointUri: {EndpointUri}",$"PrimaryKey:{PrimaryKey}",$"containerId:{containerId}",$"containerId{containerId}");
+            _log.LogInformation($"EndpointUri: {EndpointUri}", $"PrimaryKey:{PrimaryKey}", $"containerId:{containerId}", $"containerId{containerId}");
 
             await this.CreateDatabaseAsync();
             _log.LogInformation($"CreateDatabaseAsync OK");
@@ -64,67 +65,71 @@ namespace LineGPTAzureFunctions.DB
 
             // find data
             var cosmosdbresult = await this.QueryChatMsgAsync(userId);
-          
+
             if (cosmosdbresult.Count == 0)
             {  // 1. new conversion 
-                _log.LogInformation($"New conversion: / {cosmosdbresult.Count}");
-                await NewConversionStore(userId, userDisplayName, usermeeage, chatMessageList);
+                _log.LogInformation($"New conversion: / {cosmosdbresult.Count} / isInFiveMintue:{isInFiveMintue}");
+                NewConversionMessage(userId, userDisplayName, usermeeage, chatMessageList);
+                MessageMapping messageMapping = new MessageMapping();
+                chatMessageList = messageMapping.NewConversionMessage(userId, userDisplayName, usermeeage, chatMessageList); ;
             }
             else
             {// Continue conversion
-              
-                var result = cosmosdbresult.FirstOrDefault();                
+                var result = cosmosdbresult.FirstOrDefault();
                 var finalDataTime = DateTime.Parse(result.finalDataTime);
 
                 // chekc time more then 5 min
                 TimeSpan difference = DateTime.Now - finalDataTime;
-                bool isDifferenceWithin5Minutes = difference.TotalMinutes > 5;
+                bool isOver5Minutes = difference.TotalMinutes > 5;
+                _log.LogInformation($"Chekc time more then 5 min: / {finalDataTime} / {DateTime.Now} / isDifferenceWithin5Minutes / isInFiveMintue:{isInFiveMintue}");
 
-                _log.LogInformation($"Chekc time more then 5 min: / {finalDataTime} / {DateTime.Now} / isDifferenceWithin5Minutes");
-
-                if (isDifferenceWithin5Minutes)
+                if (isOver5Minutes)
                 {
-                    _log.LogInformation($"Continue conversion - more then 5 min: / {result.chatMessage.Count} : {result.chatMessage}");
-
-                    // 1.delete all record
+                    _log.LogInformation($"Continue conversion - more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
+                    // .delete all record in CosmosDB created a new conversion
                     await DeleteItemAsync(userId);
-
-                    // 2.store new data to cosmosdb
-                    await NewConversionStore(userId, userDisplayName, usermeeage, chatMessageList);
+                    isInFiveMintue = false;
                 }
                 else
                 {
                     // put message to the cosmosdb chatMessage.
                     result.chatMessage.Add(new ChatMessage(ChatMessageRole.User, usermeeage));
-                    
                     chatMessageList = result.chatMessage;
-                    _log.LogInformation($"Continue conversion - not more then 5 min: / {result.chatMessage.Count} : {result.chatMessage}");
-                    
-                    // replace new data to cosmosdb
-                    await ReplaceMsgItemAsync(chatMessageList, userId);
+                    _log.LogInformation($"Continue conversion - not more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
+                     
                 }
             }
 
             return chatMessageList;
         }
 
-        private async Task NewConversionStore(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
+        public async Task<string> FinalMessageDataProcess(List<ChatMessage> chatMessageList, string userId , string userDisplayName)
         {
-            string mergemsg = string.Format("{0},{1}", systemSetup, userDisplayName);
 
+            if (isInFiveMintue)
+            {
+
+                await ReplaceMsgItemAsync(chatMessageList, userId);
+            }
+            else
+            {
+                await StoreChatMsgToContainerAsync(chatMessageList, userId, userDisplayName , isInFiveMintue);
+            }
+
+            return " "; 
+        }
+
+   
+        private void NewConversionMessage(string userId, string userDisplayName, string usermeeage, List<ChatMessage> chatMessageList)
+        {
+            string mergemsg = string.Format("{0}{1}", systemSetup, userDisplayName);
             chatMessageList.Add(new ChatMessage(ChatMessageRole.System, mergemsg)); // Set CharGpt Role
             chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, $"Hello  ! {userDisplayName}"));
-            chatMessageList.Add(new ChatMessage(ChatMessageRole.User, usermeeage));
-            // 2.store new data to cosmosdb
-            await StoreChatMsgToContainerAsync(chatMessageList, userId, userDisplayName);
+            chatMessageList.Add(new ChatMessage(ChatMessageRole.User, usermeeage));            
         }
 
         private static void GetLocalSetting(out string systemSetup, out string EndpointUri, out string PrimaryKey, out string containerId, out string databaseId)
         {
-            var config = new ConfigurationBuilder()
-                             .SetBasePath(Environment.CurrentDirectory)
-                             .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
-                             .Build();
             KeyValueSetting keyValueSetting = new KeyValueSetting();
             systemSetup = keyValueSetting.systemSetup; 
             EndpointUri = keyValueSetting.CosmosEndpointUri; 
@@ -166,7 +171,7 @@ namespace LineGPTAzureFunctions.DB
         /// <summary>
         /// Add Family items to the container
         /// </summary>
-        private async Task StoreChatMsgToContainerAsync(List<ChatMessage> chatMessages, string userId, string userDisplayName)
+        private async Task StoreChatMsgToContainerAsync(List<ChatMessage> chatMessages, string userId, string userDisplayName, bool isFirstFiveMinute)
         {
             List<ChatMessage> userMsg = new List<ChatMessage>();
             userMsg = chatMessages;
@@ -177,7 +182,8 @@ namespace LineGPTAzureFunctions.DB
                 PartitionKey = "JapanPartition",
                 finalDataTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 chatMessage = userMsg,
-                userName = userDisplayName
+                userName = userDisplayName,
+                isFirstFiveMinute = isFirstFiveMinute,
             };
 
             try
@@ -237,14 +243,9 @@ namespace LineGPTAzureFunctions.DB
 
         private static string GetFivemMnDatatime()
         {
-            TimeSpan timeSpan = TimeSpan.FromMinutes(-5); // 5 分鐘的 TimeSpan
-            DateTime dateTime = DateTime.Now; // 現在的日期時間
-            DateTime newDateTime = dateTime.Add(timeSpan); // 加上 TimeSpan 後的日期時間
-
-            //DateTime s1 = DateTime.Now;
-            //DateTime s2 = DateTime.Now.AddMinutes(-5);
-            //var f5 = (s1 -s2).ToString("yyyy-MM-dd HH:mm:ss");
-
+            TimeSpan timeSpan = TimeSpan.FromMinutes(-5); // 5 min TimeSpan
+            DateTime dateTime = DateTime.Now; // now
+            DateTime newDateTime = dateTime.Add(timeSpan); // plus 
             return newDateTime.ToString("yyyy-MM-dd HH:mm:ss");
         }
 

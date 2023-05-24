@@ -23,6 +23,9 @@ using LineGPTAzureFunctions.DB;
 using System.Reflection.Metadata;
 using System.Configuration;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
+using System.ComponentModel.Design;
+using Microsoft.Azure.Cosmos;
 
 namespace LineGPTAzureFunctions
 {
@@ -56,26 +59,27 @@ namespace LineGPTAzureFunctions
                     {
                         // Gheck conversion form azure cosmosdb replaccr and store
                         CosmosProcess cosmosProcess = new CosmosProcess(log);
-                        var chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(jsonFromLine.events[0].source.userId, lineUserData.displayName, jsonFromLine.events[0].message.text);
+                        List<ChatMessage> chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(jsonFromLine.events[0].source.userId, lineUserData.displayName, jsonFromLine.events[0].message.text);
                         ChatMessage[] messages = chatMessageList.ToArray();
-                        chatMessageList.Clear();
-
                         ChatGPTProcess chatGPTProcess = new ChatGPTProcess();
                         ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
                         if (string.IsNullOrEmpty(results.ToString()))
                         {
+
                             string msg = $"From [OPenAI Error!!] process exception error...";
                             log.LogError(msg);
                             await lineProcess.SendNotify(msg);
                             await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From [Other!!]  some process exception error...");
-                            
-                            // Update message to cosmosdb.
 
-                            
                             return new BadRequestResult();
                         }
 
                         await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, results.Choices[0].Message.Content.Trim());
+                        
+                        chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, results.Choices[0].Message.Content.Trim()));
+                        await cosmosProcess.FinalMessageDataProcess(chatMessageList, jsonFromLine.events[0].source.userId, lineUserData.displayName);
+
+                        chatMessageList.Clear();
                         return new OkResult();
                     }
                     else if (jsonFromLine.events[0].type == "sticker"
@@ -102,7 +106,7 @@ namespace LineGPTAzureFunctions
 
             log.LogError($"From Line process exception error...");
             await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "Currently under repair, please try again later");
-            return new BadRequestResult();   
+            return new BadRequestResult();
         }
     }
 }
