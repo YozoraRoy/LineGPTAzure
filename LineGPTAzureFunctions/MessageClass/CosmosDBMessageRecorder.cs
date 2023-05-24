@@ -15,7 +15,7 @@ namespace CosmosGettingStartedTutorial
         public string? PartitionKey { get; set; }
         public string? userName { get; set; }
         public string? finalDataTime { get; set; }
-        public bool isFirstFiveMinute { get; set; }
+        public bool isInFiveMintue { get; set; }
         public List<ChatMessage> chatMessage { get; set; }        
 
         public override string ToString()

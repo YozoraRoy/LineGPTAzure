@@ -33,7 +33,7 @@ namespace LineGPTAzureFunctions.DB
         public string containerId = string.Empty;
         public string systemSetup = string.Empty;
         ILogger _log;
-        public bool isInFiveMintue = true;
+        public static bool isInFiveMintue = true;
 
         public CosmosProcess()
         { }
@@ -109,7 +109,7 @@ namespace LineGPTAzureFunctions.DB
             if (isInFiveMintue)
             {
 
-                await ReplaceMsgItemAsync(chatMessageList, userId);
+                await ReplaceMsgItemAsync(chatMessageList, userId, isInFiveMintue);
             }
             else
             {
@@ -183,7 +183,7 @@ namespace LineGPTAzureFunctions.DB
                 finalDataTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 chatMessage = userMsg,
                 userName = userDisplayName,
-                isFirstFiveMinute = isFirstFiveMinute,
+                isInFiveMintue = isFirstFiveMinute,
             };
 
             try
@@ -230,13 +230,14 @@ namespace LineGPTAzureFunctions.DB
         /// <summary>
         /// Replace an item in the container
         /// </summary>
-        private async Task ReplaceMsgItemAsync(List<ChatMessage> chatMessages, string userId)
+        private async Task ReplaceMsgItemAsync(List<ChatMessage> chatMessages, string userId, bool isFirstFiveMinute)
         {
             ItemResponse<CosmosDBMessageRecorder> msgResponse = await this.container.ReadItemAsync<CosmosDBMessageRecorder>(userId, new PartitionKey("JapanPartition"));
             var itemBody = msgResponse.Resource;
              
             itemBody.chatMessage = chatMessages;
             itemBody.finalDataTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            itemBody.isInFiveMintue = isFirstFiveMinute;
             await this.container.ReplaceItemAsync<CosmosDBMessageRecorder>(itemBody, itemBody.Id, new PartitionKey(itemBody.PartitionKey));
             // Console.WriteLine("Updated Family [{0},{1}].\n \tBody is now: {2}\n", itemBody.userName, itemBody.finalDataTime, msgResponse.Resource);
         }
