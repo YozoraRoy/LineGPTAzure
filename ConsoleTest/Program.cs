@@ -49,28 +49,36 @@ namespace ConsoleTest
             //  .AddJsonFile("appsettings.json")
             //  .Build();
 
-            List<ChatMessage> chat_message_list = new(); 
+            List<ChatMessage> chat_message_list = new();
 
-            while (true)
+            try
             {
+                while (true)
+                {
 
-                ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
+                    ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
 
-                // 印出回應
-                var reply = results.Choices[0].Message;                
-                Console.WriteLine($"{reply.Role}: {reply.Content.Trim()}");
+                    // 印出回應
+                    var reply = results.Choices[0].Message;
+                    Console.WriteLine($"{reply.Role}: {reply.Content.Trim()}");
 
-                // 設定下一個對話的 prompt
-                chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, reply.Content.Trim()));
+                    // 設定下一個對話的 prompt
+                    chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, reply.Content.Trim()));
 
-                // 等待使用者輸入
-                Console.Write("> ");
+                    // 等待使用者輸入
+                    Console.Write("> ");
 
-                string userInput = Console.ReadLine();
-                chatMessageList.Add(new ChatMessage(ChatMessageRole.User, userInput.Trim()));
-                messages = chatMessageList.ToArray();
+                    string userInput = Console.ReadLine();
+                    chatMessageList.Add(new ChatMessage(ChatMessageRole.User, userInput.Trim()));
+                    messages = chatMessageList.ToArray();
 
+                }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+             
         }
 
 

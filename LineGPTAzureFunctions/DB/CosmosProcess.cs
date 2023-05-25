@@ -57,8 +57,7 @@ namespace LineGPTAzureFunctions.DB
 
             // Create a new instance of the Cosmos Client
             this.cosmosClient = new CosmosClient(EndpointUri, PrimaryKey, new CosmosClientOptions() { ApplicationName = "CosmosDBDotnetQuickstart" });
-            _log.LogInformation($"EndpointUri: {EndpointUri}", $"PrimaryKey:{PrimaryKey}", $"containerId:{containerId}", $"containerId{containerId}");
-
+            
             await this.CreateDatabaseAsync();
             _log.LogInformation($"CreateDatabaseAsync OK");
             await this.CreateContainerAsync();
@@ -83,25 +82,26 @@ namespace LineGPTAzureFunctions.DB
                 // chekc time more then 5 min
                 TimeSpan difference = DateTime.Now - finalDataTime;
                 bool isOver5Minutes = difference.TotalMinutes > 5;
-                _log.LogInformation($"Chekc time more then 5 min: / {finalDataTime} / {DateTime.Now} / isDifferenceWithin5Minutes / isInFiveMintue:{isInFiveMintue}");
+                _log.LogInformation($"Chekc time more then 5 min: / difference.TotalMinutes:{difference.TotalMinutes} / Now {DateTime.Now} Fina {finalDataTime} / isOver5Minutes: {isOver5Minutes} / isInFiveMintue:{isInFiveMintue}");
 
                 if (isOver5Minutes)
                 {
-                    _log.LogInformation($"Continue conversation - more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
-                    // .delete all record in CosmosDB created a new conversion
-                    await DeleteItemAsync(userId);
                     isInFiveMintue = false;
                     isNewConversation = true;
+                    _log.LogInformation($"Continue conversation - more then 5 min: / result.chatMessage.Count : {result.chatMessage.Count} / isInFiveMintue:{isInFiveMintue} / isNewConversation:{isNewConversation}");
+                    // .delete all record in CosmosDB created a new conversion
+                    await DeleteItemAsync(userId);                   
                     MessageMapping messageMapping = new MessageMapping();
                     chatMessageList = messageMapping.NewConversationMessage(userId, userDisplayName, usermeeage, chatMessageList); ;
                 }
                 else
                 {
+                    isInFiveMintue = true;
+                    isNewConversation = false;
                     // put message to the cosmosdb chatMessage.
                     result.chatMessage.Add(new ChatMessage(ChatMessageRole.User, usermeeage));
                     chatMessageList = result.chatMessage;
-                    _log.LogInformation($"Continue conversation - not more then 5 min: / {result.chatMessage.Count} : {result.chatMessage} / isInFiveMintue:{isInFiveMintue}");
-                     
+                    _log.LogInformation($"Continue conversation - not more then 5 min: /  result.chatMessage.Count : {result.chatMessage.Count}  / isInFiveMintue:{isInFiveMintue} / isNewConversation:{isNewConversation}");                     
                 }
             }
 
@@ -112,15 +112,15 @@ namespace LineGPTAzureFunctions.DB
         {        
             if (isNewConversation)
             {
-                _log.LogInformation($"Start-isNewConversation - StoreChatMsgToContainerAsync");
+                _log.LogInformation($"Start-isNewConversation:{isNewConversation} - StoreChatMsgToContainerAsync");
                 await StoreChatMsgToContainerAsync(chatMessageList, userId, userDisplayName, isInFiveMintue);
-                _log.LogInformation($"Ens-isNewConversation - StoreChatMsgToContainerAsync");                
+                _log.LogInformation($"Ens-isNewConversation:{isNewConversation} - StoreChatMsgToContainerAsync");                
             }
             else if (isInFiveMintue)
             {
-                _log.LogInformation($"Start-isInFiveMintue-ReplaceMsgItemAsync");
+                _log.LogInformation($"Start-isInFiveMintue:{isInFiveMintue} -ReplaceMsgItemAsync");
                 await ReplaceMsgItemAsync(chatMessageList, userId, isInFiveMintue);
-                _log.LogInformation($"Ens-isInFiveMintue-ReplaceMsgItemAsync");
+                _log.LogInformation($"Ens-isInFiveMintue:{isInFiveMintue}-ReplaceMsgItemAsync");
             }            
         }
 

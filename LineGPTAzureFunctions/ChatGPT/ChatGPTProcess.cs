@@ -51,7 +51,6 @@ namespace LineGPTAzureFunctions.ChatGPT
             ChatRequest chatRequest = new ChatRequest();
             chatRequest.MaxTokens = 100;
            
-
             var chat = api.Chat.CreateConversation();
 
             var prompt = json.events[0].message.text;
@@ -77,7 +76,7 @@ namespace LineGPTAzureFunctions.ChatGPT
                 TopP = 0.1,
                 MaxTokens = 2900,                
                 Messages = messages
-            }); ;
+            });
 
             // log.LogInformation($"StartEndpointModeResult: {results}");
             var reply = results.Choices[0].Message;

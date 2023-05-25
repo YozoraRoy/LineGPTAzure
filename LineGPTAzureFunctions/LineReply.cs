@@ -44,9 +44,15 @@ namespace LineGPTAzureFunctions
             log.LogInformation($"Body : {requestBody}");
 
             var jsonFromLine = System.Text.Json.JsonSerializer.Deserialize<LineMessageReceiveJson>(requestBody);
-            log.LogInformation($"Message: {jsonFromLine.events[0].message.text}");
+            string lineUserId = jsonFromLine.events[0].source.userId;
+            string lineMessage = jsonFromLine.events[0].message.text;
+            string lineReplayToken = jsonFromLine.events[0].replyToken;
 
-            var lineUserData = await lineProcess.GetUserProfile(jsonFromLine.events[0].source.userId);
+
+            log.LogInformation($"Message: {lineMessage}");
+
+
+            var lineUserData = await lineProcess.GetUserProfile(lineUserId);
             log.LogInformation($"UserData: {lineUserData.displayName}");
 
             try
@@ -59,25 +65,25 @@ namespace LineGPTAzureFunctions
                     {
                         // Gheck conversation form azure cosmosdb replaccr and store
                         CosmosProcess cosmosProcess = new CosmosProcess(log);
-                        List<ChatMessage> chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(jsonFromLine.events[0].source.userId, lineUserData.displayName, jsonFromLine.events[0].message.text);
+                        List<ChatMessage> chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(lineUserId, lineUserData.displayName, lineMessage);
                         ChatMessage[] messages = chatMessageList.ToArray();
                         ChatGPTProcess chatGPTProcess = new ChatGPTProcess();
-                        ChatResult results = await chatGPTProcess.StartEndpointMode(log, messages);
-                        if (string.IsNullOrEmpty(results.ToString()))
+                        ChatResult resultsOfchatGPTProcess = await chatGPTProcess.StartEndpointMode(log, messages);
+                        if (string.IsNullOrEmpty(resultsOfchatGPTProcess.ToString()))
                         {
 
                             string msg = $"From [OPenAI Error!!] process exception error...";
                             log.LogError(msg);
                             await lineProcess.SendNotify(msg);
-                            await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "From [Other!!]  some process exception error...");
+                            await lineProcess.ReplyAsync(lineReplayToken, "From [Other!!]  some process exception error...");
 
                             return new BadRequestResult();
                         }
 
-                        await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, results.Choices[0].Message.Content.Trim());
+                        await lineProcess.ReplyAsync(lineReplayToken, resultsOfchatGPTProcess.Choices[0].Message.Content.Trim());
                         
-                        chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, results.Choices[0].Message.Content.Trim()));
-                        await cosmosProcess.FinalMessageDataProcess(chatMessageList, jsonFromLine.events[0].source.userId, lineUserData.displayName);
+                        chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, resultsOfchatGPTProcess.Choices[0].Message.Content.Trim()));
+                        await cosmosProcess.FinalMessageDataProcess(chatMessageList, lineUserId, lineUserData.displayName);
 
                         chatMessageList.Clear();
                         return new OkResult();
@@ -90,22 +96,36 @@ namespace LineGPTAzureFunctions
                         //|| json.events[0].type == "uri"
                         )
                     {
-                        await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken,
+                        await lineProcess.ReplyAsync(lineReplayToken,
                             "Sorry we are not support sticker / image / video / audio  ");
                     }
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                string msg = $"From [HttpRequestException !!] process exception error {ex.Message}";
+                log.LogError(msg);
+                string msgforLine = "Sorry, we are currently experiencing a network or server error and are working on it..";
+                if (msg.Contains("4097"))
+                {
+                      msgforLine = "Sorry, you've provided more information than I can handle.";
+                }
+
+                await lineProcess.ReplyAsync(lineReplayToken, msgforLine);
+                lineProcess.SendNotify(msg);
+                return new BadRequestResult();
             }
             catch (Exception ex)
             {
                 string msg = $"From [OutSide Exception!!] process exception error {ex.Message}";
                 log.LogError(msg);
-                await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "Currently under repair, please try again later");
-                await lineProcess.SendNotify(msg);
+                await lineProcess.ReplyAsync(lineReplayToken, "Currently under repair, please try again later");
+                lineProcess.SendNotify(msg);
                 return new BadRequestResult();
             }
 
             log.LogError($"From Line process exception error...");
-            await lineProcess.ReplyAsync(jsonFromLine.events[0].replyToken, "Currently under repair, please try again later");
+            await lineProcess.ReplyAsync(lineReplayToken, "Currently under repair, please try again later");
             return new BadRequestResult();
         }
     }
