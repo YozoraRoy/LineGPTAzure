@@ -47,6 +47,7 @@ namespace LineGPTAzureFunctions
             string lineType = jsonFromLine.events[0].type;
             string lineUserId = jsonFromLine.events[0].source.userId;
             string lineMessage = jsonFromLine.events[0].message.text;
+            string lineMessagetype = jsonFromLine.events[0].message.type;
             string lineReplayToken = jsonFromLine.events[0].replyToken;
             string lineMessageId = jsonFromLine.events[0].message.id;
 
@@ -101,17 +102,17 @@ namespace LineGPTAzureFunctions
                         chatMessageList.Clear();
                         return new OkResult();
                     }
-                    else if (lineType == "audio")
+                    else if (lineMessagetype == "audio")
                     {
                         await lineProcess.ReplyAsync(lineReplayToken,
                           "Sorry we are not support audio..");
                         _ = lineProcess.SendNotify($"{lineUserData.displayName}---{requestBody}");
                         return new OkResult();
                     }
-                    else if (lineType == "sticker"
-                        || lineType == "image"
-                        || lineType == "video"
-                        || lineType == "audio"
+                    else if (lineMessagetype == "sticker"
+                        || lineMessagetype == "image"
+                        || lineMessagetype == "video"
+                        || lineMessagetype == "audio"
                         //|| json.events[0].type == "location"
                         //|| json.events[0].type == "uri"
                         )
