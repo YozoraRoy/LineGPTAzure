@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestOPENAI", "Consol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestCosmosDB", "ConsoleTestCosmosDB\ConsoleTestCosmosDB.csproj", "{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestSpeechToText", "ConsoleTestSpeehtToText\ConsoleTestSpeechToText.csproj", "{767EE7B3-A545-4FAB-BEAA-0E4B39E4C8FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5CFCB6D-0319-4547-AE55-D3F88DEF9FEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{767EE7B3-A545-4FAB-BEAA-0E4B39E4C8FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{767EE7B3-A545-4FAB-BEAA-0E4B39E4C8FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{767EE7B3-A545-4FAB-BEAA-0E4B39E4C8FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{767EE7B3-A545-4FAB-BEAA-0E4B39E4C8FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

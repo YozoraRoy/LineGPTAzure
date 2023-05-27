@@ -44,9 +44,11 @@ namespace LineGPTAzureFunctions
             log.LogInformation($"Body : {requestBody}");
 
             var jsonFromLine = System.Text.Json.JsonSerializer.Deserialize<LineMessageReceiveJson>(requestBody);
+            string lineType = jsonFromLine.events[0].type;
             string lineUserId = jsonFromLine.events[0].source.userId;
             string lineMessage = jsonFromLine.events[0].message.text;
             string lineReplayToken = jsonFromLine.events[0].replyToken;
+            string lineMessageId = jsonFromLine.events[0].message.id;
 
 
             log.LogInformation($"Message: {lineMessage}");
@@ -61,8 +63,19 @@ namespace LineGPTAzureFunctions
                 {
                     log.LogInformation($"lineProcess: OK");
 
-                    if (jsonFromLine.events[0].type == "message")
+                    if (lineType == "message")
                     {
+                        if (lineMessage == "測試系統參數")
+                        {
+                            string s1 = ConfigurationManager.AppSettings["_master"];
+                            string s2 = Environment.GetEnvironmentVariable("_master");
+                            string s3 = ConfigurationManager.AppSettings["default"];
+                            string s4 = Environment.GetEnvironmentVariable("default");
+
+                            await lineProcess.ReplyAsync(lineReplayToken, $"{s1}/{s2}/{s3}/{s4}");
+                            return new OkResult();
+                        }
+
                         // Gheck conversation form azure cosmosdb replaccr and store
                         CosmosProcess cosmosProcess = new CosmosProcess(log);
                         List<ChatMessage> chatMessageList = await cosmosProcess.ChatGPTMessagePorcAsync(lineUserId, lineUserData.displayName, lineMessage);
@@ -81,23 +94,31 @@ namespace LineGPTAzureFunctions
                         }
 
                         await lineProcess.ReplyAsync(lineReplayToken, resultsOfchatGPTProcess.Choices[0].Message.Content.Trim());
-                        
+
                         chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, resultsOfchatGPTProcess.Choices[0].Message.Content.Trim()));
                         await cosmosProcess.FinalMessageDataProcess(chatMessageList, lineUserId, lineUserData.displayName);
 
                         chatMessageList.Clear();
                         return new OkResult();
                     }
-                    else if (jsonFromLine.events[0].type == "sticker"
-                        || jsonFromLine.events[0].type == "image"
-                        || jsonFromLine.events[0].type == "video"
-                        || jsonFromLine.events[0].type == "audio"
+                    else if (lineType == "audio")
+                    {
+                        await lineProcess.ReplyAsync(lineReplayToken,
+                          "Sorry we are not support audio..");
+                        _ = lineProcess.SendNotify($"{lineUserData.displayName}---{requestBody}");
+                        return new OkResult();
+                    }
+                    else if (lineType == "sticker"
+                        || lineType == "image"
+                        || lineType == "video"
+                        || lineType == "audio"
                         //|| json.events[0].type == "location"
                         //|| json.events[0].type == "uri"
                         )
                     {
                         await lineProcess.ReplyAsync(lineReplayToken,
-                            "Sorry we are not support sticker / image / video / audio  ");
+                            "Sorry we are not support sticker / image / video ..");
+                        return new OkResult();
                     }
                 }
             }
@@ -108,11 +129,11 @@ namespace LineGPTAzureFunctions
                 string msgforLine = "Sorry, we are currently experiencing a network or server error and are working on it..";
                 if (msg.Contains("4097"))
                 {
-                      msgforLine = "Sorry, you've provided more information than I can handle.";
+                    msgforLine = "Sorry, you've provided more information than I can handle.";
                 }
 
                 await lineProcess.ReplyAsync(lineReplayToken, msgforLine);
-                lineProcess.SendNotify(msg);
+                _ = lineProcess.SendNotify(msg);
                 return new BadRequestResult();
             }
             catch (Exception ex)

@@ -14,6 +14,7 @@ namespace LineGPTAzureFunctions.Helper
         // Line
         public string lineNotifacationToken { get; } = "mzqlxldyXfzL7PLQQZXhUJqKpsZIZVCfnsWONMcbp2o";
         public string lineMessagingApiUrl { get; } = "https://api.line.me/v2/bot/message/reply";
+        public string lineMessagingApiContentUrl { get; } = "https://api-data.line.me/v2/bot/message/";
         // GET https://api.line.me/v2/bot/profile/{userId}
         public string lineRequestUrl { get; } = "https://api.line.me/v2/bot/profile/";
         public string lineNotifyUrl { get; } = "https://notify-api.line.me/api/notify";

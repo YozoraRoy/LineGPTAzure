@@ -49,7 +49,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             OpenAIAPI api = new OpenAIAPI(apiKey);
 
             ChatRequest chatRequest = new ChatRequest();
-            chatRequest.MaxTokens = 100;
+            //chatRequest.MaxTokens = 100;
            
             var chat = api.Chat.CreateConversation();
 
