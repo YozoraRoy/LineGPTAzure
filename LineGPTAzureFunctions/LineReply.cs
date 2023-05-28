@@ -22,7 +22,6 @@ using LineGPTAzureFunctions.ChatGPT;
 using LineGPTAzureFunctions.DB;
 using System.Reflection.Metadata;
 using System.Configuration;
-using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.ComponentModel.Design;
 using Microsoft.Azure.Cosmos;
@@ -97,10 +96,9 @@ namespace LineGPTAzureFunctions
 
                         if (lineMessage == "測試系統參數")
                         {
-                            string s1 = string.Empty;
-                            //string s1 = ConfigurationManager.AppSettings["_master"];
+                            string s1 = ConfigurationManager.AppSettings["_master"];
                             string s2 = Environment.GetEnvironmentVariable("_master");
-                            string s3 = System.Configuration.ConfigurationManager.AppSettings["default"];
+                            string s3 = ConfigurationManager.AppSettings["default"];
                             string s4 = Environment.GetEnvironmentVariable("default");
 
                             await lineProcess.ReplyAsync(lineReplayToken, $"{s1}/{s2}/{s3}/{s4}");

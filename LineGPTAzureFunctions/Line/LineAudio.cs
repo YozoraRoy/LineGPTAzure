@@ -36,8 +36,8 @@ namespace LineGPTAzureFunctions.Line
                 // Azure cognitive speech  
                 Speech speech = new Speech();
                 AudioConverter audioConverter = new AudioConverter();
-                var wavStream = audioConverter.ConvertM4aStreamToWavStream(bytesResult);
-                 
+                 var wavStream = audioConverter.ConvertM4aStreamToWavStream(bytesResult);
+
                 resutle = await speech.StreamToText(wavStream);
                 return resutle;
 

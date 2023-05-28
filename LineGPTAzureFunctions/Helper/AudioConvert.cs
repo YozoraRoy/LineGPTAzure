@@ -1,11 +1,8 @@
 ﻿namespace LineGPTAzureFunctions.Helper
 {
     using LineGPTAzureFunctions.Audio;
-    using LineGPTAzureFunctions.MessageClass;
     using NAudio.Wave;
-    using System.Diagnostics;
     using System.IO;
-    using System.Speech.Recognition;
 
     public class AudioConverter
     {
@@ -67,7 +64,7 @@
 
         }
 
-         
- 
+
+
     }
 }
