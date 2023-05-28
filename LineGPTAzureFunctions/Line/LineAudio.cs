@@ -1,15 +1,10 @@
 ﻿using LineGPTAzureFunctions.Audio;
 using LineGPTAzureFunctions.Helper;
-using LineGPTAzureFunctions.MessageClass;
-using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LineGPTAzureFunctions.Line
@@ -37,36 +32,20 @@ namespace LineGPTAzureFunctions.Line
                 string resutle = string.Empty;
 
                 byte[] bytesResult = await ReadAudioFile(messageId, lineChannelAccessToken);
-
-                MemoryStream memoryStream = new MemoryStream(bytesResult);
-
+                 
                 // Azure cognitive speech  
                 Speech speech = new Speech();
-
-                using (var m4aStream = new MemoryStream(bytesResult))
-                {
-                    using (var reader = new StreamMediaFoundationReader(m4aStream))
-                    {
-
-                        //   NAudio.Wave.WaveStream to MemoryStream
-                        MemoryStream wavStream = new MemoryStream();
-                        using (WaveStream waveStream = WaveFormatConversionStream.CreatePcmStream(reader))
-                        {
-                            waveStream.CopyTo(wavStream);
-                        }
-                        wavStream.Position = 0;
-                        log.LogInformation($"wavStream-Success");
-                        resutle = await speech.StreamToText(wavStream);
-                    }
-                }
+                AudioConverter audioConverter = new AudioConverter();
+                var wavStream = audioConverter.ConvertM4aStreamToWavStream(bytesResult);
                  
+                resutle = await speech.StreamToText(wavStream);
                 return resutle;
 
             }
             catch (Exception ex)
             {
                 string errormsg = ex.Message;
-                log.LogError(errormsg);
+                // log.LogError(errormsg);
                 throw;
             }
         }
@@ -142,6 +121,8 @@ namespace LineGPTAzureFunctions.Line
             }
 
         }
+
+
     }
 
 

@@ -1,7 +1,7 @@
 ﻿using LineGPTAzureFunctions.Audio;
 using LineGPTAzureFunctions.Helper;
 using LineGPTAzureFunctions.Line;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.Extensions.Logging;
 
 namespace ConsoleTestSpeehtToText
 {
@@ -9,7 +9,16 @@ namespace ConsoleTestSpeehtToText
     {
         public static async Task Main(string[] args)
         {
+             
             KeyValueSetting keyValueSetting = new KeyValueSetting();
+            // 建立 ILoggerFactory
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+
+            // 建立 ILogger
+            ILogger log = loggerFactory.CreateLogger<Program>();
 
             //string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\"));
             //string savePath_wav = Path.Combine(projectDirectory, "file1.wav");
@@ -25,6 +34,8 @@ namespace ConsoleTestSpeehtToText
             //var spath1 = UserLocalExample("file1.wav");
             //var spath2 = UserLocalExample("file.wav");
             //var spath3 = UserLocalExample("time.wav");
+
+
 
             LineAudio lineAudio = new LineAudio();
             var result = await lineAudio.ProcessWithAzureForSteam("457020023098573158");
@@ -45,10 +56,10 @@ namespace ConsoleTestSpeehtToText
                 audioConverter.ConvertToM4A(lineResult, savePath_m4a);
             }
 
-            if (!File.Exists(savePath_wav))
-            {
-                audioConverter.ConvertM4AToWAV(savePath_m4a, savePath_wav);
-            }
+            //if (!File.Exists(savePath_wav))
+            //{
+            //    audioConverter.ConvertM4AToWAV(savePath_m4a, savePath_wav);
+            //}
 
         }
 

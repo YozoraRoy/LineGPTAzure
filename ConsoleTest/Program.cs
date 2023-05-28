@@ -1,7 +1,5 @@
 ﻿using ConsoleTest.MessageClass;
 using LineGPTAzureFunctions.ChatGPT;
-using LineGPTAzureFunctions.Line;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI_API.Chat;
 using System.Text;
