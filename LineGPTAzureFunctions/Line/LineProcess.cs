@@ -17,7 +17,7 @@ namespace LineGPTAzureFunctions.Line
     {
        static KeyValueSetting keyValueSetting = new KeyValueSetting();
         private string _lineMessagingApiUrl = keyValueSetting.lineMessagingApiUrl;
-        private string _linechannelAccessToken = keyValueSetting.linechannelAccessToken;
+        private string _linechannelAccessToken = keyValueSetting.lineChannelAccessToken;
         private string _linechannelSecret = keyValueSetting.linechannelSecret;
         private string _lineRequestUrl = keyValueSetting.lineRequestUrl;
         private string _lineNotifyUrl = keyValueSetting.lineNotifyUrl;

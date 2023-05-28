@@ -1,4 +1,6 @@
 ﻿using LineGPTAzureFunctions.Audio;
+using LineGPTAzureFunctions.Helper;
+using LineGPTAzureFunctions.Line;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace ConsoleTestSpeehtToText
@@ -7,13 +9,47 @@ namespace ConsoleTestSpeehtToText
     {
         public static async Task Main(string[] args)
         {
-            string exampleAudioFilePath = await UseHttpFileToLocal();
+            KeyValueSetting keyValueSetting = new KeyValueSetting();
 
-            // string exampleAudioFilePath = await UserLocalExample();
+            //string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\"));
+            //string savePath_wav = Path.Combine(projectDirectory, "file1.wav");
+            //string savePath_m4a = Path.Combine(projectDirectory, "file1.m4a");
 
+            //LineAudio lineAudio = new LineAudio();
+            //byte[] lineResult = await lineAudio.ReadAudioFile("457020023098573158", keyValueSetting.lineChannelAccessToken);
+            //await UseLineFileToLocal(lineResult, savePath_wav, savePath_m4a);
 
             Speech speech = new Speech();
-            await speech.StartToText(exampleAudioFilePath);
+            //var wavText = await speech.StartToText(savePath_wav);
+             
+            var spath1 = UserLocalExample("file1.wav");
+            var spath2 = UserLocalExample("file.wav");
+            var spath3 = UserLocalExample("time.wav");
+
+            var wavText1 = await speech.StartToText(spath1);
+            Console.WriteLine(wavText1);
+            var wavText2 = await speech.StartToText(spath2);
+            Console.WriteLine(wavText2);
+            var wavText3 = await speech.StartToText(spath3);
+            Console.WriteLine(wavText3);
+
+        }
+
+        private static async Task UseLineFileToLocal(byte[] lineResult , string savePath_wav, string savePath_m4a)
+        {
+
+            AudioConverter audioConverter = new AudioConverter();
+             
+            if (!File.Exists(savePath_m4a))
+            {
+                audioConverter.ConvertToM4A(lineResult, savePath_m4a);
+            }
+
+            if (!File.Exists(savePath_wav))
+            {
+                audioConverter.ConvertM4AToWAV(savePath_m4a, savePath_wav);
+            }
+
         }
 
         private static async Task<string> UseHttpFileToLocal()
@@ -21,7 +57,7 @@ namespace ConsoleTestSpeehtToText
             // string wavUrl = "https://amitaro.net/download/voice/001_aisatsu/hajimemasite_01.wav"; // 替換為實際的 WAV 檔案網址 
             string wavUrl = "https://amitaro.net/download/voice/001_aisatsu/ohhayoo_01.wav";
             string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\"));
-            string savePath =  Path.Combine(projectDirectory, "file.wav");
+            string savePath = Path.Combine(projectDirectory, "file.wav");
 
             if (!File.Exists(savePath))
             {
@@ -29,17 +65,15 @@ namespace ConsoleTestSpeehtToText
                 {
                     try
                     {
-                        // 下載 WAV 檔案
                         byte[] wavBytes = await client.GetByteArrayAsync(wavUrl);
 
-                        // 將檔案保存到本地
                         File.WriteAllBytes(savePath, wavBytes);
 
-                        Console.WriteLine("WAV 檔案下載並保存成功。");
+                        Console.WriteLine("WAV Download success。");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("發生錯誤: " + ex.Message);
+                        Console.WriteLine("Error: " + ex.Message);
                     }
                 }
             }
@@ -48,15 +82,10 @@ namespace ConsoleTestSpeehtToText
 
         }
 
-        private static async Task<string> UserLocalExample()
+        private static string UserLocalExample(string fileFullName)
         {
-
-            // D:\工作相關\Slft專案\AGcore\LineGPTAzureFunctions\ConsoleTestSpeehtToText\bin\Debug\net6.0\time.wav
-            // D:\工作相關\Slft專案\AGcore\LineGPTAzureFunctions\ConsoleTestSpeehtToText\time.wav
-
             string projectDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\"));
-            return Path.Combine(projectDirectory, "time.wav");
-
+            return Path.Combine(projectDirectory, fileFullName);
         }
     }
 }

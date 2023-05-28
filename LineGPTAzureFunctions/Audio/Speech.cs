@@ -9,64 +9,68 @@ using System.Net.Http;
 using System.Net;
 using System.Configuration;
 using Azure;
+using LineGPTAzureFunctions.Helper;
+using Microsoft.Extensions.Logging;
 
 namespace LineGPTAzureFunctions.Audio
 {
     public class Speech
     {
+        private ILogger log;
+        static KeyValueSetting keyValueSetting = new KeyValueSetting();
+        string speechKey = keyValueSetting.speechKey;
+        string speechRegion = keyValueSetting.speechRegion;
 
-        // This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-        //static string subscriptionKey = Environment.GetEnvironmentVariable("SPEECH_KEY");
-        //static string speechRegion = Environment.GetEnvironmentVariable("SPEECH_REGION");
-        // static string IsEncrypted = ConfigurationManager.AppSettings["IsEncrypted"];
+        public Speech()
+        { }
 
-        static string speechKey = "c28b66aaf54c4ca283de7fc4d0dd92de";
-        static string speechRegion = "japaneast";
-        
-
-        public Speech() {
-             
+        public Speech(ILogger log)
+        {
+            this.log = log;
         }
 
         public async Task<string> StartToText(string exampleAudioFilePath)
-        {    
-            var speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
-            // 設置自適應辨識功能
-            var autoDetectSourceLanguageConfig =
-        AutoDetectSourceLanguageConfig.FromLanguages(
-            new string[] { "en-US", "ja-JP", "zh-CN", "zh-TW", "zh-HK", "ko-KR" });
-
-
-            using AudioConfig audioConfig = AudioConfig.FromWavFileInput(exampleAudioFilePath);
-            using (SpeechRecognizer recognizer = new SpeechRecognizer(speechConfig, autoDetectSourceLanguageConfig, audioConfig))
+        {
+            try
             {
-                // 開始識別語音
-                SpeechRecognitionResult result = recognizer.RecognizeOnceAsync().GetAwaiter().GetResult();
+                var speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
+                var autoDetectSourceLanguageConfig = AutoDetectSourceLanguageConfig.FromLanguages(
+                new string[] { "ja-JP", "en-US", "zh-TW" });
 
-                // 取得識別的文字
-                string recognizedText = result.Text;
+                using AudioConfig audioConfig = AudioConfig.FromWavFileInput(exampleAudioFilePath);
+                using (SpeechRecognizer recognizer = new SpeechRecognizer(speechConfig, autoDetectSourceLanguageConfig, audioConfig))
+                {
+                    SpeechRecognitionResult result = await recognizer.RecognizeOnceAsync();
 
-                if (result.Reason == ResultReason.RecognizedSpeech)
-                {
-                    Console.WriteLine($"辨識結果: {result.Text}");
-                    // Console.WriteLine($"辨識語言: {result.Language}");
-                }
-                else if (result.Reason == ResultReason.NoMatch)
-                {
-                    Console.WriteLine("無法辨識音頻");
-                }
-                else if (result.Reason == ResultReason.Canceled)
-                {
-                    var cancellation = CancellationDetails.FromResult(result);
-                    Console.WriteLine($"辨識取消，原因：{cancellation.Reason}");
-                }
+                    string recognizedText = result.Text;
+                    if (result.Reason == ResultReason.RecognizedSpeech)
+                    {
+                        recognizedText = result.Text;
+                    }
+                    else if (result.Reason == ResultReason.NoMatch)
+                    {
+                        recognizedText = "NoMatch";
+                        log.LogInformation(recognizedText);
 
-                // 輸出識別結果
-                // Console.WriteLine("Recognized Text: " + recognizedText);
-                return recognizedText;
+                    }
+                    else if (result.Reason == ResultReason.Canceled)
+                    {
+                        var cancellation = CancellationDetails.FromResult(result);
+                        recognizedText = $"Canceled，Reason：{cancellation.Reason}";
+                        log.LogInformation(recognizedText);
+                    }
+
+                    return recognizedText;
+                }
             }
+            catch (Exception ex)
+            {
+                string message = $"Speech-StartToText-{ex.Message}";
+
+                log.LogError(message);
+                throw;
+            }
+
         }
-         
-          
     }
 }
