@@ -67,8 +67,8 @@ namespace LineGPTAzureFunctions
                         {
                             string lineMessageId = jsonFromLine.events[0].message.id;
                             LineAudio lineAudio = new LineAudio(log);
-                            string TextResult = await lineAudio.ProcessWithAzure(lineMessageId);
-                            // Gheck conversation form azure cosmosdb replaccr and store
+                            string TextResult = await lineAudio.ProcessWithAzureForSteam(lineMessageId);
+                            // Check conversation form azure cosmosdb replaccr and store
                             await ProcChatGTPandLineReply(log, lineUserId, lineReplayToken, lineUserData, TextResult);
                         }
                         else
@@ -106,7 +106,7 @@ namespace LineGPTAzureFunctions
                             return new OkResult();
                         }
 
-                        // Gheck conversation form azure cosmosdb replaccr and store
+                        // Check conversation form azure cosmosdb replaccr and store
                         await ProcChatGTPandLineReply(log, lineUserId, lineReplayToken, lineUserData, lineMessage);
 
                         return new OkResult();

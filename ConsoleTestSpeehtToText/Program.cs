@@ -21,25 +21,25 @@ namespace ConsoleTestSpeehtToText
 
             Speech speech = new Speech();
             //var wavText = await speech.StartToText(savePath_wav);
-             
-            var spath1 = UserLocalExample("file1.wav");
-            var spath2 = UserLocalExample("file.wav");
-            var spath3 = UserLocalExample("time.wav");
 
-            var wavText1 = await speech.StartToText(spath1);
-            Console.WriteLine(wavText1);
-            var wavText2 = await speech.StartToText(spath2);
-            Console.WriteLine(wavText2);
-            var wavText3 = await speech.StartToText(spath3);
-            Console.WriteLine(wavText3);
+            //var spath1 = UserLocalExample("file1.wav");
+            //var spath2 = UserLocalExample("file.wav");
+            //var spath3 = UserLocalExample("time.wav");
+
+            LineAudio lineAudio = new LineAudio();
+            var result = await lineAudio.ProcessWithAzureForSteam("457020023098573158");
+
+            Console.WriteLine(result);
+
+
 
         }
 
-        private static async Task UseLineFileToLocal(byte[] lineResult , string savePath_wav, string savePath_m4a)
+        private static async Task UseLineFileToLocal(byte[] lineResult, string savePath_wav, string savePath_m4a)
         {
 
             AudioConverter audioConverter = new AudioConverter();
-             
+
             if (!File.Exists(savePath_m4a))
             {
                 audioConverter.ConvertToM4A(lineResult, savePath_m4a);

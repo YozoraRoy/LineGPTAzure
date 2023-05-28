@@ -30,7 +30,6 @@ namespace LineGPTAzureFunctions.Helper
             }
         }
 
-
         public void ConvertToM4A(byte[] audioData, string outputPath)
         {
             File.WriteAllBytes(outputPath, audioData);

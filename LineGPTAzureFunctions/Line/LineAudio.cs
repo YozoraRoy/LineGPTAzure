@@ -1,7 +1,9 @@
 ﻿using LineGPTAzureFunctions.Audio;
 using LineGPTAzureFunctions.Helper;
 using LineGPTAzureFunctions.MessageClass;
+using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Logging;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +29,50 @@ namespace LineGPTAzureFunctions.Line
             this.log = log;
         }
 
-        public async Task<string> ProcessWithAzure(string messageId)
+
+        public async Task<string> ProcessWithAzureForSteam(string messageId)
+        {
+            try
+            {
+                string resutle = string.Empty;
+
+                byte[] bytesResult = await ReadAudioFile(messageId, lineChannelAccessToken);
+
+                MemoryStream memoryStream = new MemoryStream(bytesResult);
+
+                // Azure cognitive speech  
+                Speech speech = new Speech();
+
+                using (var m4aStream = new MemoryStream(bytesResult))
+                {
+                    using (var reader = new StreamMediaFoundationReader(m4aStream))
+                    {
+
+                        //   NAudio.Wave.WaveStream to MemoryStream
+                        MemoryStream wavStream = new MemoryStream();
+                        using (WaveStream waveStream = WaveFormatConversionStream.CreatePcmStream(reader))
+                        {
+                            waveStream.CopyTo(wavStream);
+                        }
+                        wavStream.Position = 0;
+                        log.LogInformation($"wavStream-Success");
+                        resutle = await speech.StreamToText(wavStream);
+                    }
+                }
+                 
+                return resutle;
+
+            }
+            catch (Exception ex)
+            {
+                string errormsg = ex.Message;
+                log.LogError(errormsg);
+                throw;
+            }
+        }
+
+
+        public async Task<string> ProcessWithAzureForSave(string messageId)
         {
             try
             {
@@ -49,7 +94,7 @@ namespace LineGPTAzureFunctions.Line
 
                 // Azure cognitive speech  
                 Speech speech = new Speech();
-                resutle = await speech.StartToText(wavFilePath);
+                resutle = await speech.FileToText(wavFilePath);
 
                 return resutle;
 
