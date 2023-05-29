@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LineGPTAzureFunctions": {
+      "commandName": "Project",
+      "commandLineArgs": "start --verbose"
+    }
+  }
+}
