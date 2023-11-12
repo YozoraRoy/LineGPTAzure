@@ -1,0 +1,59 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 843
+  },
+  "selected": false,
+  "name": "Richmenu-hotkey",
+  "chatBarText": "Check more",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 918,
+        "height": 843
+      },
+      "action": {
+        "type": "message",
+        "text": "Please forget what we just said."
+      }
+    },
+    {
+      "bounds": {
+        "x": 915,
+        "y": 0,
+        "width": 871,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "uri": "https://localhost:7104/Linepage/GPTDtaSet/"
+      }
+    },
+    {
+      "bounds": {
+        "x": 807,
+        "y": 448,
+        "width": 33,
+        "height": 9
+      },
+      "action": {
+        "type": "message",
+        "text": ""
+      }
+    },
+    {
+      "bounds": {
+        "x": 1792,
+        "y": 0,
+        "width": 708,
+        "height": 843
+      },
+      "action": {
+        "type": "camara",
+        "altText": "https://chatwithroy.azurewebsites.net/"
+      }
+    }
+  ]
+}

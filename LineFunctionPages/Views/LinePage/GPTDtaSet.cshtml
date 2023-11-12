@@ -1,0 +1,136 @@
+﻿@{
+    ViewData["Title"] = "Character";
+}
+
+
+
+<div class="container" id="app">
+
+    <div class="modal-dialog" role="document">
+
+
+        <div class="modal-content">
+
+            @*
+            <button type="button" v-on:click="changToEN" class="btn btn-outline-dark">English</button>
+            <button type="button" v-on:click="changToJP" class="btn btn-outline-info">日本語</button>
+            <button type="button" v-on:click="changToZHTW" class="btn btn-outline-success">繁體中文</button>
+            *@
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="CharacterTitle">Set Character</h5>
+
+            </div>
+
+            <div class="modal-body">
+                <form>
+
+                    <div class="form-floating">
+                        <textarea ref="TextForCharacter" class="form-control" placeholder="Leave a comment here" style="height: 300px"></textarea>
+                        <label for="">Write your role description for GPT!</label>
+                    </div>
+                  
+
+                    <br/>
+                    <h5 class="modal-title" id="CharacterTitle">Current Settings:</h5>
+
+                    <label></label>
+                    <p>
+                        {{ message }}
+                    </p>
+
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" v-on:click="errorHandle" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" :disabled="isDisabled" v-on:click="postData" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+    const app = Vue.createApp({
+
+        created() {
+            // get id
+            let lastSegment = this.getPathid();
+            if (lastSegment) {
+                this.fetchData(lastSegment);
+            } else {
+                this.errorHandle();
+            }
+        },
+
+        data() {
+
+            return {
+                message: 'Your character default role is empty!!',
+            };
+        },
+
+        methods: {
+
+            fetchData(id) {
+                let path = '/api/GPTData/' + id;
+                axios.get(path)
+                    .then(response => {
+                        this.message = response.data;
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+            postData() {
+
+                const textForCharacterText = this.$refs.TextForCharacter.value;
+
+                // get id
+                let id;
+                let lastSegment = this.getPathid();
+                if (lastSegment) {
+                    id = lastSegment;
+                } else {
+                    this.errorHandle();
+                }
+                 
+                const data = {
+                    character: textForCharacterText,
+                    id: id,
+                };
+
+                axios.post('/api/GPTData', data)
+                    .then(response => {
+                        console.log(response.data);
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+
+
+            getPathid() {
+                // get id
+                const url = new URL(window.location.href);
+                const pathSegments = url.pathname.split('/');
+                const lastSegment = pathSegments[pathSegments.length - 1];
+                return lastSegment;
+            },
+
+            errorHandle(){
+                window.alert("No id, the link will be closed.");
+                window.close();
+            }
+
+        },
+
+    });
+
+    app.mount('#app');
+</script>
