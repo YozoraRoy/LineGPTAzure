@@ -1,4 +1,5 @@
 ﻿using ConsoleTest.MessageClass;
+using ConsoleTestOPENAI.GPTs;
 using LineGPTAzureFunctions.ChatGPT;
 using LineGPTAzureFunctions.Helper;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,9 @@ namespace ConsoleTest
             string apiKey = "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";
             //string apiKey = "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";
 
-            await AssistantPrice(apiKey).ConfigureAwait(false);
+            Assistant assistant = new Assistant();
+
+            _ = await assistant.PriceHelper(apiKey).ConfigureAwait(false);
         }
 
 
