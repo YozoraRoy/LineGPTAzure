@@ -2,8 +2,11 @@
 using LineGPTAzureFunctions.ChatGPT;
 using LineGPTAzureFunctions.Helper;
 using Microsoft.Extensions.Logging;
+using OpenAI_API;
 using OpenAI_API.Chat;
 using System.Text;
+using System.Text.Json;
+using System.Threading;
 
 namespace ConsoleTest
 {
@@ -18,18 +21,25 @@ namespace ConsoleTest
             var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
-            }); 
+            });
 
             // 建立 ILogger
             ILogger log = loggerFactory.CreateLogger<Program>();
-           
+
             Console.InputEncoding = Encoding.Unicode;
             Console.OutputEncoding = Encoding.Unicode;
 
-            // Test Line Notify
-            //LineProcess lineProcess = new LineProcess();
-            //var s = await lineProcess.SendNotify("test");
 
+            // 你的OpenAI API金鑰
+            string apiKey = "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";
+            //string apiKey = "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";
+
+            await AssistantPrice(apiKey).ConfigureAwait(false);
+        }
+
+
+        private static async Task ChatCreated(ILogger log)
+        {
             // Replace this to your API Key
             string apiKey = string.Empty;
 
@@ -37,8 +47,8 @@ namespace ConsoleTest
             List<ChatMessage> chatMessageList = new List<ChatMessage>();
             string systemSetup =
                 @"你是一個很精通英文和日文的AI，而且擅長用C#撰寫程式語言，如果問你問題，會用英文和日文進行回答。";
-                // + "你知道使用者的ID是ABC1234567，如果有人問他的使用者ID，就回答他ABC1234567。"
-                // + "從現在起如果有人跟你問'自訂角色'或者自訂GPT角色等等意思的話，就回傳https://chatwithroy.azurewebsites.net/<使用者ID>";
+            // + "你知道使用者的ID是ABC1234567，如果有人問他的使用者ID，就回答他ABC1234567。"
+            // + "從現在起如果有人跟你問'自訂角色'或者自訂GPT角色等等意思的話，就回傳https://chatwithroy.azurewebsites.net/<使用者ID>";
             chatMessageList.Add(new ChatMessage(ChatMessageRole.System, systemSetup));
 
             chatMessageList.Add(new ChatMessage(ChatMessageRole.Assistant, "你知道使用者的ID是ABC1234567，如果有人問你他的使用者ID，就回答他。，妳好，羅伊!!"));
@@ -79,9 +89,7 @@ namespace ConsoleTest
             {
                 throw ex;
             }
-             
         }
-
 
         // un used
         private static async Task HttpWayToChatGPT(string apiKey, string roleSetup)
@@ -149,5 +157,42 @@ namespace ConsoleTest
                 messagesss.Add(new ChatGPTMsg { role = userrole, content = userInput });
             }
         }
+
+
+        public class ThreadResponse
+        {
+            public string Id { get; set; }
+            public string Object { get; set; }
+            public long CreatedAt { get; set; }
+            public object Metadata { get; set; }
+        }
+
+
+        public class ThreadRun
+        {
+            public string Id { get; set; }
+            public string Object { get; set; }
+            public long CreatedAt { get; set; }
+            public string AssistantId { get; set; }
+            public string ThreadId { get; set; }
+            public string Status { get; set; }
+            public long StartedAt { get; set; }
+            public long? ExpiresAt { get; set; }
+            public long? CancelledAt { get; set; }
+            public long? FailedAt { get; set; }
+            public long CompletedAt { get; set; }
+            public string LastError { get; set; }
+            public string Model { get; set; }
+            public string Instructions { get; set; }
+            public List<Tool> Tools { get; set; }
+            public List<string> FileIds { get; set; }
+            public Dictionary<string, object> Metadata { get; set; }
+        }
+
+        public class Tool
+        {
+            public string Type { get; set; }
+        }
+
     }
 }
