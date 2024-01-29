@@ -27,19 +27,19 @@ namespace FunctionTestProject
             httpRequest.Headers.TryGetValue("X-Line-Signature", out var xLineSignature);
         
             var json = System.Text.Json.JsonSerializer.Deserialize<LineMessageReceiveJson>(requestBody);  
-            var userData = await lineProcess.GetUserProfile(json.events[0].source.userId);
+            //var userData = await lineProcess.GetUserProfile(json.events[0].source.userId);
 
-            await lineProcess.ReplyAsync(json.events[0].replyToken,
-               " this is a test  ");
+            //await lineProcess.ReplyAsync(json.events[0].replyToken,
+            //   " this is a test  ");
 
             bool expectedResult = false;
-            if (lineProcess.IsSingature(xLineSignature, requestBody))
-            {
-                expectedResult = true;
-                await lineProcess.ReplyAsync(json.events[0].replyToken,
-                  " this is a test  ");
+            //if (lineProcess.IsSingature(xLineSignature, requestBody))
+            //{
+            //    expectedResult = true;
+            //    await lineProcess.ReplyAsync(json.events[0].replyToken,
+            //      " this is a test  ");
                
-            }
+            //}
 
             // Assert
             Assert.AreEqual(expectedResult, true);

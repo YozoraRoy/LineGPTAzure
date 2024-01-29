@@ -86,7 +86,7 @@ namespace LineGPTAzureFunctions.ChatGPT
         private static string GetApikey()
         {
             KeyValueSetting keyValueSetting = new KeyValueSetting();
-            return keyValueSetting.ChatGPTAPIKey;
+            return keyValueSetting.gptOpenAIKey002;
         }
 
     }

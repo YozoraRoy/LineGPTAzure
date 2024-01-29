@@ -376,3 +376,7 @@ FodyWeavers.xsd
 /LineGPTAzureFunctions/Helper/KeyValueSetting.cs
 /LineGPTAzureFunctions/Helper/KeyValueSetting.cs
 /LineGPTAzureFunctions/Helper/KeyValueSetting.cs
+/LineGPTAzureFunctions/Setting/KeyValueSettingDev.cs
+/LineGPTAzureFunctions/Setting/KeyValueSettingTMS.cs
+/LineGPTAzureFunctions/Setting/KeyValueSettingMiby.cs
+/LineGPTAzureFunctions/Setting/KeyValueSetting.cs

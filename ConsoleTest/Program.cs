@@ -30,14 +30,15 @@ namespace ConsoleTest
             Console.InputEncoding = Encoding.Unicode;
             Console.OutputEncoding = Encoding.Unicode;
 
+            KeyValueSetting keyValueSetting = new KeyValueSetting();
 
             // 你的OpenAI API金鑰
-            string apiKey = "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";
-            //string apiKey = "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";
+            string apiKey = keyValueSetting.gptOpenAIKey002;
+            string assistantID = keyValueSetting.assistantId002;
+            string assistantName = keyValueSetting.assistantName002;
 
-            Assistant assistant = new Assistant();
-
-            _ = await assistant.PriceHelper(apiKey).ConfigureAwait(false);
+            // ConsoleTestOPENAI.GPTs.Assistant assistant = new ConsoleTestOPENAI.GPTs.Assistant();
+            await ConsoleTestOPENAI.GPTs.Assistant.PriceHelper(apiKey, assistantID, assistantName).ConfigureAwait(false);
         }
 
 

@@ -25,26 +25,56 @@ namespace LineGPTAzureFunctions.Line
         private HttpClient _httpClient = new HttpClient();
         // ILogger log;
 
+        private readonly ILogger _logger;
 
-        public async Task ReplyAsync(string replyToken, string message)
-        {
-
-            HttpClient _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _linechannelAccessToken);
-
-            var response = await _httpClient.PostAsJsonAsync<LineTextReplyJson>(_lineMessagingApiUrl, new LineTextReplyJson()
-            {
-                replyToken = replyToken,
-                messages = new List<Message>()
-        {
-            new Message(){
-                type = "text",
-                text = message
-            }
+        public LineProcess()
+        {// 無作用
+            _logger = LoggerHelper.GetLogger<LineProcess>();
         }
-            });
-            response.EnsureSuccessStatusCode();
+
+        public async Task ReplyAsync(string replyToken, string message, string lineUserName, string lineUserId)
+        {
+            try
+            {
+                HttpClient _httpClient = new HttpClient();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _linechannelAccessToken);
+
+                // Json? 2種套件?
+                var response = await _httpClient.PostAsJsonAsync<LineTextReplyJson>(_lineMessagingApiUrl, new LineTextReplyJson()
+                {
+                    replyToken = replyToken,
+                    messages = new List<Message>()
+                    {
+                        new Message()
+                        {
+                            type = "text",
+                            text = message
+                        }
+                    }
+                });
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                string msg = $"From [LineProcess HttpRequestException !!][User:{lineUserName} || UserID {lineUserId}] process exception error {ex.Message}";
+                _logger.LogError($"User:{lineUserName} || UserID:{lineUserId} || {msg} || {ex}");
+                string msgforLine = "Sorry, we are currently experiencing a network or server error and are working on it..";
+
+                // 暫時不使用
+                //await lineProcess.ReplyAsync(lineReplayToken, msgforLine);
+                //_ = lineProcess.SendNotify(msg);
+
+                // Clear All data by user id.
+                // await ClearCosmosDB(log, lineUserId);
+
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public bool IsSingature(string signature, string text)
@@ -60,8 +90,32 @@ namespace LineGPTAzureFunctions.Line
             }
         }
 
-        public async Task<UserProfile> GetUserProfile(string userId)
+        public bool IsSingature(string signature, string text, string linechannelSecret)
         {
+
+            var textBytes = Encoding.UTF8.GetBytes(text);
+            var keyBytes = Encoding.UTF8.GetBytes(_linechannelSecret);
+
+            if (!string.IsNullOrEmpty(linechannelSecret))
+            {
+                keyBytes = Encoding.UTF8.GetBytes(linechannelSecret);
+            }
+
+            using (HMACSHA256 hmac = new HMACSHA256(keyBytes))
+            {
+                var hash = hmac.ComputeHash(textBytes, 0, textBytes.Length);
+                var hash64 = Convert.ToBase64String(hash);
+                return signature == hash64;
+            }
+        }
+
+        public async Task<UserProfile> GetUserProfile(string userId, string linechannelAccessToken)
+        {
+            if (!string.IsNullOrEmpty(linechannelAccessToken))
+            {
+                _linechannelAccessToken = linechannelAccessToken;
+            }
+
             HttpClient httpClient = new HttpClient();
 
             var httpRequestMessage = new HttpRequestMessage
