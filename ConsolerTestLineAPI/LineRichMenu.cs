@@ -9,7 +9,7 @@ public class LineMenuCustomization
 {
     private static readonly HttpClient _httpClient = new HttpClient();
     static KeyValueSetting keyValueSetting = new KeyValueSetting();
-    private static readonly string _channelAccessToken = keyValueSetting.lineChannelAccessToken;
+    private static readonly string _channelAccessToken = keyValueSetting.linechannelAccessTokenRoyGPT;
     private string _richMenuId = keyValueSetting.richMenuId;
 
     public async Task<string> GetRichMenu()

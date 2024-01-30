@@ -13,7 +13,7 @@ namespace LineGPTAzureFunctions.Line
     {
         static KeyValueSetting keyValueSetting = new KeyValueSetting();
         string lineMessagingApiContentUrl = keyValueSetting.lineMessagingApiContentUrl;
-        string lineChannelAccessToken = keyValueSetting.lineChannelAccessToken;
+        string lineChannelAccessToken = keyValueSetting.linechannelAccessTokenRoyGPT;
 
         private ILogger log;
 

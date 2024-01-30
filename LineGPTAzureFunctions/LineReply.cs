@@ -6,25 +6,16 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System.Net.Http;
-using System.Text;
-using OpenAI_API;
-using System.Security.Cryptography;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
 using LineGPTAzureFunctions.MessageClass;
-using OpenAI_API.Moderation;
 using OpenAI_API.Chat;
-using OpenAI_API.Models;
 using LineGPTAzureFunctions.Line;
 using LineGPTAzureFunctions.ChatGPT;
 using LineGPTAzureFunctions.DB;
-using System.Reflection.Metadata;
 using System.Configuration;
 using System.Linq;
-using System.ComponentModel.Design;
-using Microsoft.Azure.Cosmos;
+using LineGPTAzureFunctions.Helper;
 
 namespace LineGPTAzureFunctions
 {
@@ -87,7 +78,7 @@ namespace LineGPTAzureFunctions
                     {
                         await lineProcess.ReplyAsync(lineReplayToken,
                             @"Sorry we are not support sticker / image / video / uri 。
-                              申し訳ありませんが、ステッカー、画像、動画、URIのサポートは行っておりません。", lineUserName, lineUserId);                        
+                              申し訳ありませんが、ステッカー、画像、動画、URIのサポートは行っておりません。", lineUserName, lineUserId);
                         return new OkResult();
                     }
                     else
@@ -167,6 +158,7 @@ namespace LineGPTAzureFunctions
             if (jsonFromLine != null)
             {
                 lineUserId = jsonFromLine.events[0].source.userId;
+                _logger.LogInformation($"lineUserId:{lineUserId}");
             }
             else
             {
@@ -176,10 +168,12 @@ namespace LineGPTAzureFunctions
 
             string lineMessagetype = jsonFromLine.events[0].message.type;
             string lineReplayToken = jsonFromLine.events[0].replyToken;
-            string linechannelAccessToken = "jbwg5RbX/5A47Gg/xGgvMVE0WMFNjlpYzDrc2fyAGO07qikKownm3Wu4u7mrTbu15VgoqZgq/RfGo2RM0WlgHGpw/gSSa/BWNyGYx8tJaNioffVXTiGUBnjbsSNzijJEkAy9GA3w9XQKZCiCb7SLxwdB04t89/1O/w1cDnyilFU=";
-            string linechannelSecret = "1045973fc88d32d25dd2eb22586ddbed";
+
+            KeyValueSetting keyValueSetting = new KeyValueSetting();
+
+            _logger.LogInformation($"lineProcess.start");
             LineProcess lineProcess = new LineProcess();
-            var lineUserData = await lineProcess.GetUserProfile(lineUserId, linechannelAccessToken);
+            var lineUserData = await lineProcess.GetUserProfile(lineUserId, keyValueSetting.linechannelAccessTokenRoyGPT);
             lineUserName = lineUserData.displayName;
 
             _logger.LogInformation($"lineProcess.IsSingature(xLineSignature, requestBody)");
@@ -187,7 +181,7 @@ namespace LineGPTAzureFunctions
             try
             {
 
-                if (lineProcess.IsSingature(xLineSignature, requestBody, linechannelSecret))
+                if (lineProcess.IsSingature(xLineSignature, requestBody, keyValueSetting.linechannelSecretRoyGPT))
                 {
                     _logger.LogInformation($"if (lineProcess.IsSingature(xLineSignature.... Success");
 
@@ -198,15 +192,26 @@ namespace LineGPTAzureFunctions
                         return new OkResult();
                     }
                     else if (lineMessagetype == "sticker"
-                        || lineMessagetype == "image"
+
                         || lineMessagetype == "video"
                         || lineMessagetype == "location"
                         || lineMessagetype == "uri"
                         )
                     {
                         await lineProcess.ReplyAsync(lineReplayToken,
-                            @"Sorry we are not support sticker / image / video / uri 。", lineUserName, lineUserId);
+                            @"Sorry we are not support video / uri 。", lineUserName, lineUserId);
                         return new OkResult();
+                    }
+                    else if (lineMessagetype == "image")
+                    {
+                        _logger.LogInformation($"image");
+
+                        await lineProcess.ReplyAsync(lineReplayToken,
+                           $@"Processing, please wait / 「処理中です。今しばらくお待ちください」", lineUserName, lineUserId).ConfigureAwait(false);
+
+                        await ViewImageAndReply(_logger, jsonFromLine, lineUserId, keyValueSetting.linechannelAccessTokenRoyGPT).ConfigureAwait(false);
+
+                        // return new OkResult();
                     }
                     else
                     {
@@ -222,7 +227,7 @@ namespace LineGPTAzureFunctions
                         // 新增使用者
                         // saveToAzureMSDB(chatDataAccess, chatUserId);
 
-                        _logger.LogInformation($"start");
+                        _logger.LogInformation($"message start");
                         Assistant assistant = new Assistant(_logger);
                         var assistantResponse = await assistant.JPTeacherHelper(lineMessage).ConfigureAwait(false);
 
@@ -237,7 +242,7 @@ namespace LineGPTAzureFunctions
 
                                 if (string.IsNullOrEmpty(assistantMsg))
                                 {
-                                    assistantMsg = "剛剛網路狀況有點不好，請再問一次剛剛的問題。";
+                                    assistantMsg = "The internet connection was a bit unstable just now, please ask the previous question again";
                                     Console.WriteLine($"AI: {assistantMsg}");
                                 }
                                 else
@@ -252,9 +257,9 @@ namespace LineGPTAzureFunctions
 
 
                         // 新增使用者的問題
-                       // SaveMessageToAzureMSDB(chatDataAccess, chatUserId, lineMessage, ChatRole.User.ToString(), "002", 3, threadId);
+                        // SaveMessageToAzureMSDB(chatDataAccess, chatUserId, lineMessage, ChatRole.User.ToString(), "002", 3, threadId);
 
-                       // SaveMessageToAzureMSDB(chatDataAccess, chatUserId, assistantMsg, ChatRole.Assistant.ToString(), "002", 3, threadId);
+                        // SaveMessageToAzureMSDB(chatDataAccess, chatUserId, assistantMsg, ChatRole.Assistant.ToString(), "002", 3, threadId);
 
                         _logger.LogInformation($"ResultMessage:{assistantMsg}");
                         return new OkResult();
@@ -303,11 +308,20 @@ namespace LineGPTAzureFunctions
                 return new BadRequestResult();
             }
 
-            _logger.LogError($"User:{lineUserName} From Line process exception error...");
-            await lineProcess.ReplyAsync(lineReplayToken, @"We’ve had a little mishap now, please try again later.", lineUserName, lineUserId);
-            return new BadRequestResult();
+            return new OkResult();
         }
 
+        private static async Task ViewImageAndReply(ILogger _logger, LineMessageReceiveJson jsonFromLine, string lineUserId, string linechannelAccessToken)
+        {
+            LineContent lineContent = new LineContent(_logger);
+            var result = await lineContent.GetImageToDrive(linechannelAccessToken, jsonFromLine.events[0].message.id, lineUserName, lineUserId).ConfigureAwait(false);
+         
+            // 推送新訊息
+            LineMessage lineMessage = new LineMessage(_logger);
+             
+            await lineMessage.AddMsg(lineUserId, result).ConfigureAwait(false);
+
+        }
 
         private static async Task ProcChatGTPandLineReply(ILogger log, string lineUserId, string lineReplayToken, UserProfile lineUserData, string lineMessage)
         {

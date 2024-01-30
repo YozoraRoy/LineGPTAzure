@@ -1,10 +1,18 @@
 ﻿using ConsoleTest.MessageClass;
 using ConsoleTestOPENAI.GPTs;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Drive.v3.Data;
+using Google.Apis.Services;
+using Google.Apis.Util.Store;
 using LineGPTAzureFunctions.ChatGPT;
 using LineGPTAzureFunctions.Helper;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 using OpenAI_API;
 using OpenAI_API.Chat;
+using System;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -33,15 +41,160 @@ namespace ConsoleTest
             KeyValueSetting keyValueSetting = new KeyValueSetting();
 
             // 你的OpenAI API金鑰
-            string apiKey = keyValueSetting.gptOpenAIKey002;
-            string assistantID = keyValueSetting.assistantId002;
-            string assistantName = keyValueSetting.assistantName002;
+            //string apiKey = keyValueSetting.gptOpenAIKey002;
+            //string assistantID = keyValueSetting.assistantId002;
+            //string assistantName = keyValueSetting.assistantName002;
 
             // ConsoleTestOPENAI.GPTs.Assistant assistant = new ConsoleTestOPENAI.GPTs.Assistant();
-            await ConsoleTestOPENAI.GPTs.Assistant.PriceHelper(apiKey, assistantID, assistantName).ConfigureAwait(false);
+            //await ConsoleTestOPENAI.GPTs.Assistant.PriceHelper(apiKey, assistantID, assistantName).ConfigureAwait(false);
+
+            await GoogleDrive().ConfigureAwait(false);
+        }
+
+        #region "Google雲端硬碟"
+
+        public static async Task GoogleDrive()
+        {
+            // 設定服務帳號 JSON 檔案的路徑
+            string serviceAccountKeyFilePath = "D:\\googleyozoraroyServiceAccount.json";
+
+
+            //string serviceAccountKeyJJson = @"";
+
+            // 設定使用者的權限範圍
+            string[] scopes = { DriveService.Scope.Drive };
+
+            //// 載入服務帳號 JSON 金鑰
+            GoogleCredential credential;
+            using (var stream = new FileStream(serviceAccountKeyFilePath, FileMode.Open, FileAccess.Read))
+            {
+                credential = GoogleCredential.FromStream(stream)
+                    .CreateScoped(scopes);
+            }
+             
+
+            // 使用 JsonCredentialParameters 建立 Google 憑證
+            // var credential = GoogleCredential.FromJson(serviceAccountKeyJJson)
+            //.CreateScoped(scopes)
+            //.UnderlyingCredential as ServiceAccountCredential;
+
+
+            // 建立Google Drive服務
+            var service = new DriveService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "DriveAccount",
+            });
+
+
+            // 指定父資料夾名稱
+            string parentFolderName = "ImageForOpenAI";
+
+            // 在Google Drive中建立一個檔案
+            var fileId = CreateFile(service, parentFolderName, "Hello.txt", "Hello, World!");
+
+            // 將檔案設為公開連結
+            SetFilePermission(service, fileId);
+
+            var filePublicLink = GetFilePublicLink(service, fileId);
+            Console.WriteLine($"File created successfully. Public link: {filePublicLink}");
+        }
+
+        private static string CreateFile(DriveService service, string parentFolderName, string fileName, string content)
+        {
+            string result = string.Empty;
+
+            // 查詢父資料夾的ID
+            var folderQuery = $"name='{parentFolderName}' and mimeType='application/vnd.google-apps.folder'";
+            var folderListRequest = service.Files.List();
+            folderListRequest.Q = folderQuery;
+
+            try
+            {
+                var folderList = folderListRequest.Execute();
+
+                var parentFolderId = folderList.Files.Select(f => f.Id)
+                                                    .FirstOrDefault();
+
+                if (parentFolderId != null)
+                {
+                    // 在指定的父資料夾中建立檔案
+                    var fileMetadata = new Google.Apis.Drive.v3.Data.File()
+                    {
+                        Name = fileName,
+                        Parents = new List<string> { parentFolderId }
+                    };
+
+                    var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+                    FilesResource.CreateMediaUpload request;
+                    using (stream)
+                    {
+                        request = service.Files.Create(fileMetadata, stream, "text/plain");
+                        request.Upload();
+                    }
+
+                    var file = request.ResponseBody;
+                    Console.WriteLine($"File ID: {file.Id}");
+
+                    result = file.Id;
+
+                }
+                else
+                {
+                    Console.WriteLine($"Parent folder '{parentFolderName}' not found.");
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+            return result;
+
+        }
+
+        private static void SetFilePermission(DriveService service, string fileId)
+        {
+            // 設定檔案的權限為公開連結
+            var permission = new Permission
+            {
+                Type = "anyone",
+                Role = "reader"
+            };
+
+            service.Permissions.Create(permission, fileId).Execute();
         }
 
 
+        private static string GetFilePublicLink(DriveService service, string fileId)
+        {
+            try
+            {
+                var file = service.Files.Get(fileId).Execute();
+
+                if (file != null && !string.IsNullOrEmpty(file.WebViewLink))
+                {
+                    return file.WebViewLink;
+                }
+                else
+                {
+                    Console.WriteLine($"File with ID '{fileId}' not found or doesn't have a public link.");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while getting file details: {ex.Message}");
+                return null;
+            }
+        }
+
+        #endregion
+
+         
         private static async Task ChatCreated(ILogger log)
         {
             // Replace this to your API Key
@@ -94,6 +247,9 @@ namespace ConsoleTest
                 throw ex;
             }
         }
+
+     
+        //--------------------------
 
         // un used
         private static async Task HttpWayToChatGPT(string apiKey, string roleSetup)
