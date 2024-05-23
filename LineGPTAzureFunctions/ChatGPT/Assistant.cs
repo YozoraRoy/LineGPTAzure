@@ -94,7 +94,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = $"https://api.openai.com/v1/threads/{threadId}";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
 
             var response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)
@@ -119,7 +119,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = $"https://api.openai.com/v1/threads/{threadId}/messages?order=desc&limit=2";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
             var response = await client.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
@@ -145,7 +145,7 @@ namespace LineGPTAzureFunctions.ChatGPT
                 var url = $"https://api.openai.com/v1/threads/{threadId}/runs/{runID}";
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-                client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+                client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
 
                 var response = await client.GetAsync(url);
 
@@ -179,7 +179,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = $"https://api.openai.com/v1/threads/{threadId}/runs";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
             var jsonStr = JsonSerializer.Serialize(new
             {
                 assistant_id = assistantId,
@@ -213,7 +213,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = $"https://api.openai.com/v1/threads/{threadId}/messages";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
             var jsonStr = JsonSerializer.Serialize(new
             {
                 role = "user",
@@ -244,7 +244,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = "https://api.openai.com/v1/threads";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
 
             var response = await client.PostAsync(url, null);
             if (response.IsSuccessStatusCode)
@@ -271,7 +271,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = "https://api.openai.com/v1/assistants";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
             var jsonStr = JsonSerializer.Serialize(new
             {
                 instructions,
@@ -304,7 +304,7 @@ namespace LineGPTAzureFunctions.ChatGPT
             var url = "https://api.openai.com/v1/assistants?order=desc&limit=20";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v1");
+            client.DefaultRequestHeaders.Add("OpenAI-Beta", "assistants=v2");
             var response = await client.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {

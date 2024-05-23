@@ -16,6 +16,8 @@ using LineGPTAzureFunctions.DB;
 using System.Configuration;
 using System.Linq;
 using LineGPTAzureFunctions.Helper;
+using Newtonsoft.Json;
+using LineGPTAzureFunctions.Models.OpenAI;
 
 namespace LineGPTAzureFunctions
 {
@@ -158,7 +160,11 @@ namespace LineGPTAzureFunctions
             if (jsonFromLine != null)
             {
                 lineUserId = jsonFromLine.events[0].source.userId;
-                _logger.LogInformation($"lineUserId:{lineUserId}");
+              
+                var logJsonString  = JsonConvert.SerializeObject(jsonFromLine.events[0], Formatting.Indented);
+
+                _logger.LogInformation($"jsonFromLine.events[0]:{logJsonString}");
+
             }
             else
             {
@@ -166,8 +172,22 @@ namespace LineGPTAzureFunctions
                 return new BadRequestResult();
             }
 
-            string lineMessagetype = jsonFromLine.events[0].message.type;
-            string lineReplayToken = jsonFromLine.events[0].replyToken;
+            string lineMessagetype = string.Empty;
+            string lineReplayToken = string.Empty;
+
+            try
+            {
+                 lineMessagetype = jsonFromLine.events[0].message.type;
+                 lineReplayToken = jsonFromLine.events[0].replyToken;
+            }
+            catch (Exception ex)
+            {
+                var logJsonString = JsonConvert.SerializeObject(jsonFromLine.events[0], Formatting.Indented);
+
+                _logger.LogError($"lineMessagetype || lineReplayToken Error: {logJsonString}");
+                throw ex;
+            }
+         
 
             KeyValueSetting keyValueSetting = new KeyValueSetting();
 

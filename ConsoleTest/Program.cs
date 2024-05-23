@@ -34,21 +34,20 @@ namespace ConsoleTest
 
             // 建立 ILogger
             ILogger log = loggerFactory.CreateLogger<Program>();
-
             Console.InputEncoding = Encoding.Unicode;
             Console.OutputEncoding = Encoding.Unicode;
 
             KeyValueSetting keyValueSetting = new KeyValueSetting();
 
             // 你的OpenAI API金鑰
-            //string apiKey = keyValueSetting.gptOpenAIKey002;
-            //string assistantID = keyValueSetting.assistantId002;
-            //string assistantName = keyValueSetting.assistantName002;
+            string apiKey = keyValueSetting.gptOpenAIKey002;
+            string assistantID = keyValueSetting.assistantId002;
+            string assistantName = keyValueSetting.assistantName002;
 
             // ConsoleTestOPENAI.GPTs.Assistant assistant = new ConsoleTestOPENAI.GPTs.Assistant();
-            //await ConsoleTestOPENAI.GPTs.Assistant.PriceHelper(apiKey, assistantID, assistantName).ConfigureAwait(false);
+            await ConsoleTestOPENAI.GPTs.Assistant.PriceHelper(apiKey, assistantID, assistantName).ConfigureAwait(false);
 
-            await GoogleDrive().ConfigureAwait(false);
+            // await GoogleDrive().ConfigureAwait(false);
         }
 
         #region "Google雲端硬碟"

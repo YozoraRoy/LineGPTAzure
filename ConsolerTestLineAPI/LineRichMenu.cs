@@ -194,9 +194,7 @@ public class LineMenuCustomization
     public async Task<string> AssignRichMenu(bool isAssign)
     {
         string reslut = string.Empty;
-
         string userId = "U6fa80bda7dcb81a8a51d926ff36d832b";
-
 
         string linkUrl = string.Empty;
 
